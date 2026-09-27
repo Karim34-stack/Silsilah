@@ -1,356 +1,618 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Silsilah Keluarga Interaktif</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .tree-line-v {
-            width: 2px;
-            background-color: #cbd5e1;
-        }
-        .tree-line-h {
-            height: 2px;
-            background-color: #cbd5e1;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
+      .tree-line-v {
+        width: 2px;
+        background-color: #cbd5e1;
+      }
+      .tree-line-h {
+        height: 2px;
+        background-color: #cbd5e1;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
     </style>
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
-
+  </head>
+  <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
     <!-- HEADER / NAVBAR -->
     <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-700 p-2 rounded-lg">
-                    <i data-lucide="git-fork" class="w-6 h-6 text-indigo-200"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight">Silsilah Keluarga</h1>
-                    <p class="text-xs text-indigo-300">Database Berbasis Google Sheets</p>
-                </div>
-            </div>
-
-            <div class="flex items-center space-x-2">
-                <!-- Status Peran & Toggle -->
-                <div id="roleBadge" class="flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    <i data-lucide="user" class="w-3.5 h-3.5 mr-1"></i>
-                    <span>Akses: Anggota</span>
-                </div>
-
-                <button id="btnToggleRole" onclick="toggleRoleModal()" class="bg-indigo-800 hover:bg-indigo-700 text-xs px-3 py-1.5 rounded-lg border border-indigo-600 transition flex items-center gap-1">
-                    <i data-lucide="shield-lock" class="w-3.5 h-3.5"></i>
-                    <span id="btnRoleText">Masuk Admin</span>
-                </button>
-
-                <button onclick="openScriptInstructionModal()" class="bg-indigo-800 hover:bg-indigo-700 text-xs px-3 py-1.5 rounded-lg border border-indigo-600 transition flex items-center gap-1 text-indigo-200">
-                    <i data-lucide="database" class="w-3.5 h-3.5"></i>
-                    <span>Pengaturan Database</span>
-                </button>
-            </div>
+      <div
+        class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3"
+      >
+        <div class="flex items-center space-x-3">
+          <div class="bg-indigo-700 p-2 rounded-lg">
+            <i data-lucide="git-fork" class="w-6 h-6 text-indigo-200"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg leading-tight">Silsilah Keluarga</h1>
+            <p class="text-xs text-indigo-300">
+              Database Berbasis Google Sheets
+            </p>
+          </div>
         </div>
+
+        <div class="flex items-center space-x-2">
+          <!-- Status Peran & Toggle -->
+          <div
+            id="roleBadge"
+            class="flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300"
+          >
+            <i data-lucide="user" class="w-3.5 h-3.5 mr-1"></i>
+            <span>Akses: Anggota</span>
+          </div>
+
+          <button
+            id="btnToggleRole"
+            onclick="toggleRoleModal()"
+            class="bg-indigo-800 hover:bg-indigo-700 text-xs px-3 py-1.5 rounded-lg border border-indigo-600 transition flex items-center gap-1"
+          >
+            <i data-lucide="shield-lock" class="w-3.5 h-3.5"></i>
+            <span id="btnRoleText">Masuk Admin</span>
+          </button>
+
+          <button
+            onclick="openScriptInstructionModal()"
+            class="bg-indigo-800 hover:bg-indigo-700 text-xs px-3 py-1.5 rounded-lg border border-indigo-600 transition flex items-center gap-1 text-indigo-200"
+          >
+            <i data-lucide="database" class="w-3.5 h-3.5"></i>
+            <span>Pengaturan Database</span>
+          </button>
+        </div>
+      </div>
     </header>
 
     <!-- CONTENT BODY -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 flex flex-col gap-6">
-
-        <!-- CONTROLS & ACTION BAR -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-            
-            <!-- Tab Mode Tampilan -->
-            <div class="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto">
-                <button id="btnViewTree" onclick="switchView('tree')" class="flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 bg-white text-indigo-900 shadow-sm">
-                    <i data-lucide="network" class="w-4 h-4"></i>
-                    <span>Bagan Pohon</span>
-                </button>
-                <button id="btnViewList" onclick="switchView('list')" class="flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900">
-                    <i data-lucide="list" class="w-4 h-4"></i>
-                    <span>Daftar Anggota</span>
-                </button>
-            </div>
-
-            <!-- Search & Filter -->
-            <div class="flex flex-1 max-w-md w-full gap-2">
-                <div class="relative flex-1">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Cari nama, kota, atau alamat..." class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <select id="filterStatus" onchange="handleFilter()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="all">Semua Status</option>
-                    <option value="alive">Masih Hidup</option>
-                    <option value="deceased">Almarhum/ah</option>
-                </select>
-            </div>
-
-            <!-- Tombol Tambah Data -->
-            <button onclick="openFormModal()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition">
-                <i data-lucide="user-plus" class="w-4 h-4"></i>
-                <span>Tambah Anggota</span>
-            </button>
+      <!-- CONTROLS & ACTION BAR -->
+      <div
+        class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4"
+      >
+        <!-- Tab Mode Tampilan -->
+        <div class="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto">
+          <button
+            id="btnViewTree"
+            onclick="switchView('tree')"
+            class="flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 bg-white text-indigo-900 shadow-sm"
+          >
+            <i data-lucide="network" class="w-4 h-4"></i>
+            <span>Bagan Pohon</span>
+          </button>
+          <button
+            id="btnViewList"
+            onclick="switchView('list')"
+            class="flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900"
+          >
+            <i data-lucide="list" class="w-4 h-4"></i>
+            <span>Daftar Anggota</span>
+          </button>
         </div>
 
-        <!-- NOTIFIKASI SYNC DATABASE -->
-        <div id="dbWarningBanner" class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-xs flex justify-between items-center hidden">
-            <div class="flex items-center gap-2">
-                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
-                <span>URL Apps Script belum dikonfigurasi. Data saat ini disimpan sementara secara lokal di browser.</span>
-            </div>
-            <button onclick="openScriptInstructionModal()" class="underline font-semibold hover:text-amber-900">Atur Database</button>
+        <!-- Search & Filter -->
+        <div class="flex flex-1 max-w-md w-full gap-2">
+          <div class="relative flex-1">
+            <i
+              data-lucide="search"
+              class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            ></i>
+            <input
+              type="text"
+              id="searchInput"
+              oninput="handleSearch()"
+              placeholder="Cari nama, kota, atau alamat..."
+              class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <select
+            id="filterStatus"
+            onchange="handleFilter()"
+            class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="all">Semua Status</option>
+            <option value="alive">Masih Hidup</option>
+            <option value="deceased">Almarhum/ah</option>
+          </select>
         </div>
 
-        <!-- VIEW 1: BAGAN POHON SILSILAH -->
-        <div id="viewTree" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 min-h-[500px] overflow-x-auto custom-scrollbar">
-            <div id="treeContainer" class="flex flex-col items-center justify-center min-w-max py-4">
-                <!-- Node pohon silsilah akan di-render melalui JS -->
-            </div>
-        </div>
+        <!-- Tombol Tambah Data -->
+        <button
+          onclick="openFormModal()"
+          class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition"
+        >
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Tambah Anggota</span>
+        </button>
+      </div>
 
-        <!-- VIEW 2: DAFTAR / LIST VIEW -->
-        <div id="viewList" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                        <tr>
-                            <th class="p-4">Anggota</th>
-                            <th class="p-4">Gender</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4">Tgl Lahir / Lahir Di</th>
-                            <th class="p-4">Alamat Rumah</th>
-                            <th class="p-4 text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listTableBody" class="divide-y divide-slate-100">
-                        <!-- Data tabel akan di-render melalui JS -->
-                    </tbody>
-                </table>
-            </div>
+      <!-- NOTIFIKASI SYNC DATABASE -->
+      <div
+        id="dbWarningBanner"
+        class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-xs flex justify-between items-center hidden"
+      >
+        <div class="flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
+          <span
+            >URL Apps Script belum dikonfigurasi. Data saat ini disimpan
+            sementara secara lokal di browser.</span
+          >
         </div>
+        <button
+          onclick="openScriptInstructionModal()"
+          class="underline font-semibold hover:text-amber-900"
+        >
+          Atur Database
+        </button>
+      </div>
 
+      <!-- VIEW 1: BAGAN POHON SILSILAH -->
+      <div
+        id="viewTree"
+        class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 min-h-[500px] overflow-x-auto custom-scrollbar"
+      >
+        <div
+          id="treeContainer"
+          class="flex flex-col items-center justify-center min-w-max py-4"
+        >
+          <!-- Node pohon silsilah akan di-render melalui JS -->
+        </div>
+      </div>
+
+      <!-- VIEW 2: DAFTAR / LIST VIEW -->
+      <div
+        id="viewList"
+        class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hidden"
+      >
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead
+              class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold"
+            >
+              <tr>
+                <th class="p-4">Anggota</th>
+                <th class="p-4">Gender</th>
+                <th class="p-4">Status</th>
+                <th class="p-4">Tgl Lahir / Lahir Di</th>
+                <th class="p-4">Alamat Rumah</th>
+                <th class="p-4 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="listTableBody" class="divide-y divide-slate-100">
+              <!-- Data tabel akan di-render melalui JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
     </main>
 
     <!-- MODAL: FORM TAMBAH / EDIT ANGGOTA -->
-    <div id="formModal" class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl">
-            <div class="p-5 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
-                <h3 id="formModalTitle" class="font-bold text-lg text-slate-800">Tambah Anggota Keluarga</h3>
-                <button onclick="closeFormModal()" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            
-            <form id="memberForm" onsubmit="handleFormSubmit(event)" class="p-5 space-y-4">
-                <input type="hidden" id="formId">
-
-                <!-- Nama Lengkap -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap *</label>
-                    <input type="text" id="formName" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-
-                <!-- Gender & Status -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Kelamin *</label>
-                        <select id="formGender" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
-                            <option value="male">Laki-laki</option>
-                            <option value="female">Perempuan</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Status Keberadaan *</label>
-                        <select id="formStatus" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
-                            <option value="alive">Masih Hidup</option>
-                            <option value="deceased">Almarhum/ah</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Tempat & Tanggal Lahir -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tempat Lahir</label>
-                        <input type="text" id="formBirthPlace" placeholder="Kota" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Lahir</label>
-                        <input type="date" id="formBirthDate" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- Foto Profil (Upload / URL) -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Foto Profil</label>
-                    <div class="space-y-2">
-                        <input type="file" id="formPhotoFile" accept="image/*" onchange="handleFileUpload(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        <div class="text-center text-xs text-slate-400 font-medium">- ATAU -</div>
-                        <input type="url" id="formPhotoUrl" placeholder="https://example.com/foto.jpg" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- Alamat Rumah -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Rumah Saat Ini / Terakhir</label>
-                    <textarea id="formAddress" rows="2" placeholder="Jl. Raya No. 123, Kelurahan, Kecamatan, Kota" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
-                </div>
-
-                <!-- Relasi Orang Tua & Pasangan -->
-                <div class="grid grid-cols-2 gap-3 border-t border-slate-200 pt-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Orang Tua (Ayah/Ibu)</label>
-                        <select id="formParentId" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
-                            <option value="">-- Tanpa Orang Tua (Akar) --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Pasangan (Suami/Istri)</label>
-                        <select id="formSpouseId" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
-                            <option value="">-- Belum/Tidak Ada --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Catatan Tambahan -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Bio Singkat</label>
-                    <textarea id="formNotes" rows="2" placeholder="Pekerjaan, hobi, atau catatan khusus..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
-                </div>
-
-                <!-- Tombol Submit -->
-                <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
-                    <button type="button" onclick="closeFormModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm">Simpan Data</button>
-                </div>
-            </form>
+    <div
+      id="formModal"
+      class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl"
+      >
+        <div
+          class="p-5 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10"
+        >
+          <h3 id="formModalTitle" class="font-bold text-lg text-slate-800">
+            Tambah Anggota Keluarga
+          </h3>
+          <button
+            onclick="closeFormModal()"
+            class="text-slate-400 hover:text-slate-600"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
         </div>
+
+        <form
+          id="memberForm"
+          onsubmit="handleFormSubmit(event)"
+          class="p-5 space-y-4"
+        >
+          <input type="hidden" id="formId" />
+
+          <!-- Nama Lengkap -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1"
+              >Nama Lengkap *</label
+            >
+            <input
+              type="text"
+              id="formName"
+              required
+              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          <!-- Gender & Status -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1"
+                >Jenis Kelamin *</label
+              >
+              <select
+                id="formGender"
+                required
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+              >
+                <option value="male">Laki-laki</option>
+                <option value="female">Perempuan</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1"
+                >Status Keberadaan *</label
+              >
+              <select
+                id="formStatus"
+                required
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+              >
+                <option value="alive">Masih Hidup</option>
+                <option value="deceased">Almarhum/ah</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tempat & Tanggal Lahir -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1"
+                >Tempat Lahir</label
+              >
+              <input
+                type="text"
+                id="formBirthPlace"
+                placeholder="Kota"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1"
+                >Tanggal Lahir</label
+              >
+              <input
+                type="date"
+                id="formBirthDate"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Foto Profil (Upload / URL) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1"
+              >Foto Profil</label
+            >
+            <div class="space-y-2">
+              <input
+                type="file"
+                id="formPhotoFile"
+                accept="image/*"
+                onchange="handleFileUpload(event)"
+                class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <div class="text-center text-xs text-slate-400 font-medium">
+                - ATAU -
+              </div>
+              <input
+                type="url"
+                id="formPhotoUrl"
+                placeholder="https://example.com/foto.jpg"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Alamat Rumah -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1"
+              >Alamat Rumah Saat Ini / Terakhir</label
+            >
+            <textarea
+              id="formAddress"
+              rows="2"
+              placeholder="Jl. Raya No. 123, Kelurahan, Kecamatan, Kota"
+              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            ></textarea>
+          </div>
+
+          <!-- Relasi Orang Tua & Pasangan -->
+          <div class="grid grid-cols-2 gap-3 border-t border-slate-200 pt-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1"
+                >Orang Tua (Ayah/Ibu)</label
+              >
+              <select
+                id="formParentId"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+              >
+                <option value="">-- Tanpa Orang Tua (Akar) --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1"
+                >Pasangan (Suami/Istri)</label
+              >
+              <select
+                id="formSpouseId"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+              >
+                <option value="">-- Belum/Tidak Ada --</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Catatan Tambahan -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1"
+              >Catatan / Bio Singkat</label
+            >
+            <textarea
+              id="formNotes"
+              rows="2"
+              placeholder="Pekerjaan, hobi, atau catatan khusus..."
+              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            ></textarea>
+          </div>
+
+          <!-- Tombol Submit -->
+          <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            <button
+              type="button"
+              onclick="closeFormModal()"
+              class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm"
+            >
+              Simpan Data
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- MODAL: DETAIL ANGGOTA -->
-    <div id="detailModal" class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl">
-            <div class="bg-indigo-900 text-white p-6 text-center relative">
-                <button onclick="closeDetailModal()" class="absolute right-4 top-4 text-indigo-200 hover:text-white">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-                <img id="detailPhoto" src="" alt="Foto Profil" class="w-24 h-24 rounded-full border-4 border-white object-cover mx-auto shadow-md mb-3 bg-slate-200">
-                <h3 id="detailName" class="text-xl font-bold"></h3>
-                <p id="detailStatus" class="text-xs text-indigo-200 mt-1"></p>
-            </div>
-
-            <div class="p-6 space-y-4 text-sm">
-                <div class="flex items-start gap-3">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 mt-0.5"></i>
-                    <div>
-                        <div class="text-xs text-slate-400 font-semibold">ALAMAT RUMAH</div>
-                        <div id="detailAddress" class="text-slate-700"></div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-3">
-                    <div>
-                        <div class="text-xs text-slate-400 font-semibold">TEMPAT, TGL LAHIR</div>
-                        <div id="detailBirth" class="text-slate-700"></div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-slate-400 font-semibold">JENIS KELAMIN</div>
-                        <div id="detailGender" class="text-slate-700"></div>
-                    </div>
-                </div>
-
-                <div class="border-t border-slate-100 pt-3">
-                    <div class="text-xs text-slate-400 font-semibold">PASANGAN</div>
-                    <div id="detailSpouse" class="text-slate-700 font-medium"></div>
-                </div>
-
-                <div class="border-t border-slate-100 pt-3">
-                    <div class="text-xs text-slate-400 font-semibold mb-1">ANAK-ANAK</div>
-                    <div id="detailChildren" class="flex flex-wrap gap-1"></div>
-                </div>
-
-                <div class="border-t border-slate-100 pt-3">
-                    <div class="text-xs text-slate-400 font-semibold">CATATAN / BIO</div>
-                    <div id="detailNotes" class="text-slate-600 text-xs italic mt-0.5"></div>
-                </div>
-            </div>
-
-            <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end gap-2" id="detailModalActions">
-                <!-- Tombol Edit & Hapus akan disisipkan via JS jika login sebagai Admin -->
-            </div>
+    <div
+      id="detailModal"
+      class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl"
+      >
+        <div class="bg-indigo-900 text-white p-6 text-center relative">
+          <button
+            onclick="closeDetailModal()"
+            class="absolute right-4 top-4 text-indigo-200 hover:text-white"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+          <img
+            id="detailPhoto"
+            src=""
+            alt="Foto Profil"
+            class="w-24 h-24 rounded-full border-4 border-white object-cover mx-auto shadow-md mb-3 bg-slate-200"
+          />
+          <h3 id="detailName" class="text-xl font-bold"></h3>
+          <p id="detailStatus" class="text-xs text-indigo-200 mt-1"></p>
         </div>
+
+        <div class="p-6 space-y-4 text-sm">
+          <div class="flex items-start gap-3">
+            <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 mt-0.5"></i>
+            <div>
+              <div class="text-xs text-slate-400 font-semibold">
+                ALAMAT RUMAH
+              </div>
+              <div id="detailAddress" class="text-slate-700"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-3">
+            <div>
+              <div class="text-xs text-slate-400 font-semibold">
+                TEMPAT, TGL LAHIR
+              </div>
+              <div id="detailBirth" class="text-slate-700"></div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400 font-semibold">
+                JENIS KELAMIN
+              </div>
+              <div id="detailGender" class="text-slate-700"></div>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-3">
+            <div class="text-xs text-slate-400 font-semibold">PASANGAN</div>
+            <div id="detailSpouse" class="text-slate-700 font-medium"></div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-3">
+            <div class="text-xs text-slate-400 font-semibold mb-1">
+              ANAK-ANAK
+            </div>
+            <div id="detailChildren" class="flex flex-wrap gap-1"></div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-3">
+            <div class="text-xs text-slate-400 font-semibold">
+              CATATAN / BIO
+            </div>
+            <div
+              id="detailNotes"
+              class="text-slate-600 text-xs italic mt-0.5"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end gap-2"
+          id="detailModalActions"
+        >
+          <!-- Tombol Edit & Hapus akan disisipkan via JS jika login sebagai Admin -->
+        </div>
+      </div>
     </div>
 
     <!-- MODAL: LOGIN / KONFIRMASI ADMIN PASSWORD -->
-    <div id="roleModal" class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="roleModalTitle" class="font-bold text-slate-800">Masuk Mode Admin</h3>
-                <button onclick="closeRoleModal()" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            
-            <form id="adminAuthForm" onsubmit="handleAdminLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Masukkan Password Admin</label>
-                    <input type="password" id="adminPasswordInput" placeholder="••••••••" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    <p id="passwordError" class="text-xs text-red-500 mt-1 hidden">Password salah!</p>
-                </div>
-
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeRoleModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm">Verifikasi</button>
-                </div>
-            </form>
+    <div
+      id="roleModal"
+      class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 id="roleModalTitle" class="font-bold text-slate-800">
+            Masuk Mode Admin
+          </h3>
+          <button
+            onclick="closeRoleModal()"
+            class="text-slate-400 hover:text-slate-600"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
         </div>
+
+        <form
+          id="adminAuthForm"
+          onsubmit="handleAdminLogin(event)"
+          class="space-y-4"
+        >
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1"
+              >Masukkan Password Admin</label
+            >
+            <input
+              type="password"
+              id="adminPasswordInput"
+              placeholder="••••••••"
+              required
+              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+            <p id="passwordError" class="text-xs text-red-500 mt-1 hidden">
+              Password salah!
+            </p>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onclick="closeRoleModal()"
+              class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm"
+            >
+              Verifikasi
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- MODAL: PANDUAN CONFIG APPS SCRIPT DATABASE -->
-    <div id="scriptInstructionModal" class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar p-6 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-                <h3 class="font-bold text-lg text-slate-800">Pengaturan Database Google Sheets</h3>
-                <button onclick="closeScriptInstructionModal()" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
+    <div
+      id="scriptInstructionModal"
+      class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar p-6 shadow-2xl space-y-4"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-200 pb-3"
+        >
+          <h3 class="font-bold text-lg text-slate-800">
+            Pengaturan Database Google Sheets
+          </h3>
+          <button
+            onclick="closeScriptInstructionModal()"
+            class="text-slate-400 hover:text-slate-600"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
 
-            <p class="text-sm text-slate-600">
-                Aplikasi ini mendukung sinkronisasi data langsung dengan Google Sheets menggunakan **Google Apps Script Web App**.
-            </p>
+        <p class="text-sm text-slate-600">
+          Aplikasi ini mendukung sinkronisasi data langsung dengan Google Sheets
+          menggunakan **Google Apps Script Web App**.
+        </p>
 
-            <div class="space-y-3 text-xs text-slate-700">
-                <div class="font-semibold text-slate-900 text-sm">Langkah Integrasi:</div>
-                <ol class="list-decimal pl-4 space-y-1.5">
-                    <li>Buat Spreadsheet baru di <strong>Google Sheets</strong>.</li>
-                    <li>Buka menu <strong>Ekstensi &gt; Apps Script</strong>.</li>
-                    <li>Hapus semua kode bawaan, lalu salin kode Google Apps Script di bawah ini.</li>
-                    <li>Klik <strong>Terapkan (Deploy) &gt; Penrapan baru (New deployment)</strong>.</li>
-                    <li>Pilih jenis <strong>Web App</strong>, atur <i>Who has access / Siapa yang memiliki akses</i> menjadi <strong>Anyone (Siapa Saja)</strong>.</li>
-                    <li>Salin <strong>Web App URL</strong> yang dihasilkan dan tempelkan pada kolom di bawah ini.</li>
-                </ol>
-            </div>
+        <div class="space-y-3 text-xs text-slate-700">
+          <div class="font-semibold text-slate-900 text-sm">
+            Langkah Integrasi:
+          </div>
+          <ol class="list-decimal pl-4 space-y-1.5">
+            <li>Buat Spreadsheet baru di <strong>Google Sheets</strong>.</li>
+            <li>Buka menu <strong>Ekstensi &gt; Apps Script</strong>.</li>
+            <li>
+              Hapus semua kode bawaan, lalu salin kode Google Apps Script di
+              bawah ini.
+            </li>
+            <li>
+              Klik
+              <strong
+                >Terapkan (Deploy) &gt; Penrapan baru (New deployment)</strong
+              >.
+            </li>
+            <li>
+              Pilih jenis <strong>Web App</strong>, atur
+              <i>Who has access / Siapa yang memiliki akses</i> menjadi
+              <strong>Anyone (Siapa Saja)</strong>.
+            </li>
+            <li>
+              Salin <strong>Web App URL</strong> yang dihasilkan dan tempelkan
+              pada kolom di bawah ini.
+            </li>
+          </ol>
+        </div>
 
-            <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Google Apps Script Web App URL</label>
-                <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1"
+            >Google Apps Script Web App URL</label
+          >
+          <input
+            type="url"
+            id="scriptUrlInput"
+            placeholder="https://script.google.com/macros/s/.../exec"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          />
+        </div>
 
-            <div class="bg-slate-900 text-slate-200 p-3 rounded-lg overflow-x-auto text-[11px] font-mono relative">
-                <button onclick="copyAppsScriptCode()" class="absolute right-2 top-2 bg-indigo-600 text-white px-2 py-1 rounded text-[10px]">Salin Kode</button>
-                <pre id="appsScriptCode">
+        <div
+          class="bg-slate-900 text-slate-200 p-3 rounded-lg overflow-x-auto text-[11px] font-mono relative"
+        >
+          <button
+            onclick="copyAppsScriptCode()"
+            class="absolute right-2 top-2 bg-indigo-600 text-white px-2 py-1 rounded text-[10px]"
+          >
+            Salin Kode
+          </button>
+          <pre id="appsScriptCode">
 function doGet() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var rows = sheet.getDataRange().getValues();
@@ -395,589 +657,659 @@ function doPost(e) {
   return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
     .setMimeType(ContentService.MimeType.JSON);
 }
-                </pre>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
-                <button onclick="saveScriptUrl()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm">Simpan &amp; Hubungkan</button>
-            </div>
+                </pre
+          >
         </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+          <button
+            onclick="saveScriptUrl()"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm"
+          >
+            Simpan &amp; Hubungkan
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // CONFIG & STATE
-        const ADMIN_PASSWORD = "admin"; // Password standar untuk mode Admin
-        let isAdmin = false;
-        let scriptUrl = localStorage.getItem("familyTreeScriptUrl") || "";
-        let familyData = [];
-        let currentView = "tree";
-        let uploadedPhotoBase64 = "";
+      // CONFIG & STATE
+      const ADMIN_PASSWORD = "admin"; // Password standar untuk mode Admin
+      let isAdmin = false;
+      let scriptUrl = localStorage.getItem("familyTreeScriptUrl") || "";
+      let familyData = [];
+      let currentView = "tree";
+      let uploadedPhotoBase64 = "";
 
-        // DATA SAMPEL AWAL (JIKA GSHEET BELUM DITAMBAHKAN)
-        const sampleData = [
-            {
-                id: "1",
-                name: "H. Ahmad Raden",
-                gender: "male",
-                status: "deceased",
-                birthPlace: "Yogyakarta",
-                birthDate: "1945-08-17",
-                photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
-                address: "Jl. Malioboro No. 12, Yogyakarta",
-                parentId: "",
-                spouseId: "2",
-                notes: "Perintis keluarga besar"
-            },
-            {
-                id: "2",
-                name: "Hj. Siti Aminah",
-                gender: "female",
-                status: "alive",
-                birthPlace: "Solo",
-                birthDate: "1950-05-12",
-                photoUrl: "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=150",
-                address: "Jl. Malioboro No. 12, Yogyakarta",
-                parentId: "",
-                spouseId: "1",
-                notes: "Nenek penyayang"
-            },
-            {
-                id: "3",
-                name: "Budi Santoso",
-                gender: "male",
-                status: "alive",
-                birthPlace: "Jakarta",
-                birthDate: "1975-03-20",
-                photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-                address: "Jl. Kemang Raya No. 45, Jakarta Selatan",
-                parentId: "1",
-                spouseId: "4",
-                notes: "Anak pertama"
-            },
-            {
-                id: "4",
-                name: "Dewi Lestari",
-                gender: "female",
-                status: "alive",
-                birthPlace: "Bandung",
-                birthDate: "1978-11-05",
-                photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-                address: "Jl. Kemang Raya No. 45, Jakarta Selatan",
-                parentId: "",
-                spouseId: "3",
-                notes: ""
-            },
-            {
-                id: "5",
-                name: "Rizky Pratama",
-                gender: "male",
-                status: "alive",
-                birthPlace: "Jakarta",
-                birthDate: "2005-09-14",
-                photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-                address: "Jl. Kemang Raya No. 45, Jakarta Selatan",
-                parentId: "3",
-                spouseId: "",
-                notes: "Cucu pertama"
+      // DATA SAMPEL AWAL (JIKA GSHEET BELUM DITAMBAHKAN)
+      const sampleData = [
+        {
+          id: "1",
+          name: "H. Ahmad Raden",
+          gender: "male",
+          status: "deceased",
+          birthPlace: "Yogyakarta",
+          birthDate: "1945-08-17",
+          photoUrl:
+            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+          address: "Jl. Malioboro No. 12, Yogyakarta",
+          parentId: "",
+          spouseId: "2",
+          notes: "Perintis keluarga besar",
+        },
+        {
+          id: "2",
+          name: "Hj. Siti Aminah",
+          gender: "female",
+          status: "alive",
+          birthPlace: "Solo",
+          birthDate: "1950-05-12",
+          photoUrl:
+            "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=150",
+          address: "Jl. Malioboro No. 12, Yogyakarta",
+          parentId: "",
+          spouseId: "1",
+          notes: "Nenek penyayang",
+        },
+        {
+          id: "3",
+          name: "Budi Santoso",
+          gender: "male",
+          status: "alive",
+          birthPlace: "Jakarta",
+          birthDate: "1975-03-20",
+          photoUrl:
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+          address: "Jl. Kemang Raya No. 45, Jakarta Selatan",
+          parentId: "1",
+          spouseId: "4",
+          notes: "Anak pertama",
+        },
+        {
+          id: "4",
+          name: "Dewi Lestari",
+          gender: "female",
+          status: "alive",
+          birthPlace: "Bandung",
+          birthDate: "1978-11-05",
+          photoUrl:
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+          address: "Jl. Kemang Raya No. 45, Jakarta Selatan",
+          parentId: "",
+          spouseId: "3",
+          notes: "",
+        },
+        {
+          id: "5",
+          name: "Rizky Pratama",
+          gender: "male",
+          status: "alive",
+          birthPlace: "Jakarta",
+          birthDate: "2005-09-14",
+          photoUrl:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+          address: "Jl. Kemang Raya No. 45, Jakarta Selatan",
+          parentId: "3",
+          spouseId: "",
+          notes: "Cucu pertama",
+        },
+      ];
+
+      // INITIALIZATION
+      window.addEventListener("DOMContentLoaded", () => {
+        lucide.createIcons();
+        loadData();
+        checkScriptUrlStatus();
+      });
+
+      function checkScriptUrlStatus() {
+        const banner = document.getElementById("dbWarningBanner");
+        if (!scriptUrl) {
+          banner.classList.remove("hidden");
+        } else {
+          banner.classList.add("hidden");
+        }
+      }
+
+      // LOAD DATA (LOCAL/REMOTE)
+      async function loadData() {
+        if (scriptUrl) {
+          try {
+            const response = await fetch(scriptUrl);
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+              familyData = data;
+            } else {
+              familyData =
+                JSON.parse(localStorage.getItem("familyData")) || sampleData;
             }
-        ];
+          } catch (e) {
+            console.error(
+              "Gagal memuat dari Apps Script, memuat local cache",
+              e,
+            );
+            familyData =
+              JSON.parse(localStorage.getItem("familyData")) || sampleData;
+          }
+        } else {
+          familyData =
+            JSON.parse(localStorage.getItem("familyData")) || sampleData;
+        }
+        saveLocalData();
+        renderCurrentView();
+      }
 
-        // INITIALIZATION
-        window.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            loadData();
-            checkScriptUrlStatus();
+      function saveLocalData() {
+        localStorage.setItem("familyData", JSON.stringify(familyData));
+      }
+
+      async function syncToRemoteDatabase() {
+        saveLocalData();
+        if (!scriptUrl) return;
+
+        try {
+          await fetch(scriptUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "saveAll", data: familyData }),
+          });
+        } catch (e) {
+          console.error(
+            "Gagal melakukan enkripsi/sinkronisasi ke Google Apps Script:",
+            e,
+          );
+        }
+      }
+
+      // ROLE MANAGEMENT
+      function toggleRoleModal() {
+        if (isAdmin) {
+          isAdmin = false;
+          updateRoleUI();
+        } else {
+          document.getElementById("roleModal").classList.remove("hidden");
+        }
+      }
+
+      function closeRoleModal() {
+        document.getElementById("roleModal").classList.add("hidden");
+        document.getElementById("passwordError").classList.add("hidden");
+        document.getElementById("adminPasswordInput").value = "";
+      }
+
+      function handleAdminLogin(e) {
+        e.preventDefault();
+        const pwd = document.getElementById("adminPasswordInput").value;
+        if (pwd === ADMIN_PASSWORD) {
+          isAdmin = true;
+          updateRoleUI();
+          closeRoleModal();
+        } else {
+          document.getElementById("passwordError").classList.remove("hidden");
+        }
+      }
+
+      function updateRoleUI() {
+        const badge = document.getElementById("roleBadge");
+        const btnText = document.getElementById("btnRoleText");
+
+        if (isAdmin) {
+          badge.className =
+            "flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300";
+          badge.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1"></i><span>Akses: Admin</span>`;
+          btnText.textContent = "Keluar Admin";
+        } else {
+          badge.className =
+            "flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300";
+          badge.innerHTML = `<i data-lucide="user" class="w-3.5 h-3.5 mr-1"></i><span>Akses: Anggota</span>`;
+          btnText.textContent = "Masuk Admin";
+        }
+        lucide.createIcons();
+        renderCurrentView();
+      }
+
+      // VIEW SWITCHER
+      function switchView(view) {
+        currentView = view;
+        const btnTree = document.getElementById("btnViewTree");
+        const btnList = document.getElementById("btnViewList");
+        const viewTree = document.getElementById("viewTree");
+        const viewList = document.getElementById("viewList");
+
+        if (view === "tree") {
+          btnTree.className =
+            "flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 bg-white text-indigo-900 shadow-sm";
+          btnList.className =
+            "flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
+          viewTree.classList.remove("hidden");
+          viewList.classList.add("hidden");
+        } else {
+          btnList.className =
+            "flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 bg-white text-indigo-900 shadow-sm";
+          btnTree.className =
+            "flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
+          viewList.classList.remove("hidden");
+          viewTree.classList.add("hidden");
+        }
+        renderCurrentView();
+      }
+
+      function renderCurrentView() {
+        if (currentView === "tree") {
+          renderTree();
+        } else {
+          renderList();
+        }
+      }
+
+      // RENDER POHON SILSILAH
+      function renderTree() {
+        const container = document.getElementById("treeContainer");
+        container.innerHTML = "";
+
+        const roots = familyData.filter((m) => !m.parentId);
+        if (roots.length === 0 && familyData.length > 0) {
+          roots.push(familyData[0]);
+        }
+
+        if (familyData.length === 0) {
+          container.innerHTML = `<div class="text-center py-12 text-slate-400">Belum ada data keluarga. Klik "Tambah Anggota" untuk memulai.</div>`;
+          return;
+        }
+
+        const treeWrapper = document.createElement("div");
+        treeWrapper.className = "flex gap-8 justify-center";
+
+        roots.forEach((root) => {
+          treeWrapper.appendChild(createTreeNode(root));
         });
 
-        function checkScriptUrlStatus() {
-            const banner = document.getElementById("dbWarningBanner");
-            if (!scriptUrl) {
-                banner.classList.remove("hidden");
-            } else {
-                banner.classList.add("hidden");
-            }
+        container.appendChild(treeWrapper);
+        lucide.createIcons();
+      }
+
+      function createTreeNode(member) {
+        const node = document.createElement("div");
+        node.className = "flex flex-col items-center";
+
+        const spouse = familyData.find((m) => m.id === member.spouseId);
+        const children = familyData.filter(
+          (m) =>
+            m.parentId === member.id || (spouse && m.parentId === spouse.id),
+        );
+
+        // Card Member & Spouse
+        const cardWrapper = document.createElement("div");
+        cardWrapper.className = "flex items-center gap-2 relative z-10";
+
+        cardWrapper.appendChild(createMemberCard(member));
+        if (spouse) {
+          const ringIcon = document.createElement("div");
+          ringIcon.className =
+            "text-amber-500 font-bold text-xs bg-amber-50 p-1 rounded-full border border-amber-200 shadow-sm";
+          ringIcon.innerHTML = `<i data-lucide="heart" class="w-3.5 h-3.5 fill-amber-500"></i>`;
+          cardWrapper.appendChild(ringIcon);
+          cardWrapper.appendChild(createMemberCard(spouse));
         }
 
-        // LOAD DATA (LOCAL/REMOTE)
-        async function loadData() {
-            if (scriptUrl) {
-                try {
-                    const response = await fetch(scriptUrl);
-                    const data = await response.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        familyData = data;
-                    } else {
-                        familyData = JSON.parse(localStorage.getItem("familyData")) || sampleData;
-                    }
-                } catch (e) {
-                    console.error("Gagal memuat dari Apps Script, memuat local cache", e);
-                    familyData = JSON.parse(localStorage.getItem("familyData")) || sampleData;
-                }
-            } else {
-                familyData = JSON.parse(localStorage.getItem("familyData")) || sampleData;
-            }
-            saveLocalData();
-            renderCurrentView();
+        node.appendChild(cardWrapper);
+
+        // Render Children Node
+        if (children.length > 0) {
+          const lineV1 = document.createElement("div");
+          lineV1.className = "tree-line-v h-6";
+          node.appendChild(lineV1);
+
+          const childrenWrapper = document.createElement("div");
+          childrenWrapper.className = "flex gap-6 relative pt-4";
+
+          if (children.length > 1) {
+            const lineH = document.createElement("div");
+            lineH.className =
+              "tree-line-h absolute top-0 left-1/2 -translate-x-1/2 w-[calc(100%-120px)]";
+            childrenWrapper.appendChild(lineH);
+          }
+
+          children.forEach((child) => {
+            const childContainer = document.createElement("div");
+            childContainer.className = "flex flex-col items-center relative";
+
+            const lineV2 = document.createElement("div");
+            lineV2.className = "tree-line-v h-4 absolute -top-4";
+            childContainer.appendChild(lineV2);
+
+            childContainer.appendChild(createTreeNode(child));
+            childrenWrapper.appendChild(childContainer);
+          });
+
+          node.appendChild(childrenWrapper);
         }
 
-        function saveLocalData() {
-            localStorage.setItem("familyData", JSON.stringify(familyData));
-        }
+        return node;
+      }
 
-        async function syncToRemoteDatabase() {
-            saveLocalData();
-            if (!scriptUrl) return;
+      function createMemberCard(member) {
+        const card = document.createElement("div");
+        card.className = `bg-white border rounded-xl p-3 shadow-sm hover:shadow-md transition cursor-pointer w-48 flex flex-col items-center text-center relative ${
+          member.gender === "male"
+            ? "border-blue-200 hover:border-blue-400"
+            : "border-pink-200 hover:border-pink-400"
+        }`;
+        card.onclick = () => openDetailModal(member.id);
 
-            try {
-                await fetch(scriptUrl, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "saveAll", data: familyData })
-                });
-            } catch (e) {
-                console.error("Gagal melakukan enkripsi/sinkronisasi ke Google Apps Script:", e);
-            }
-        }
+        const photo = member.photoUrl || "https://via.placeholder.com/150";
+        const statusBadge =
+          member.status === "alive"
+            ? `<span class="w-2 h-2 rounded-full bg-emerald-500 absolute top-2 right-2" title="Masih Hidup"></span>`
+            : `<span class="w-2 h-2 rounded-full bg-slate-400 absolute top-2 right-2" title="Almarhum/ah"></span>`;
 
-        // ROLE MANAGEMENT
-        function toggleRoleModal() {
-            if (isAdmin) {
-                isAdmin = false;
-                updateRoleUI();
-            } else {
-                document.getElementById("roleModal").classList.remove("hidden");
-            }
-        }
-
-        function closeRoleModal() {
-            document.getElementById("roleModal").classList.add("hidden");
-            document.getElementById("passwordError").classList.add("hidden");
-            document.getElementById("adminPasswordInput").value = "";
-        }
-
-        function handleAdminLogin(e) {
-            e.preventDefault();
-            const pwd = document.getElementById("adminPasswordInput").value;
-            if (pwd === ADMIN_PASSWORD) {
-                isAdmin = true;
-                updateRoleUI();
-                closeRoleModal();
-            } else {
-                document.getElementById("passwordError").classList.remove("hidden");
-            }
-        }
-
-        function updateRoleUI() {
-            const badge = document.getElementById("roleBadge");
-            const btnText = document.getElementById("btnRoleText");
-
-            if (isAdmin) {
-                badge.className = "flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300";
-                badge.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1"></i><span>Akses: Admin</span>`;
-                btnText.textContent = "Keluar Admin";
-            } else {
-                badge.className = "flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300";
-                badge.innerHTML = `<i data-lucide="user" class="w-3.5 h-3.5 mr-1"></i><span>Akses: Anggota</span>`;
-                btnText.textContent = "Masuk Admin";
-            }
-            lucide.createIcons();
-            renderCurrentView();
-        }
-
-        // VIEW SWITCHER
-        function switchView(view) {
-            currentView = view;
-            const btnTree = document.getElementById("btnViewTree");
-            const btnList = document.getElementById("btnViewList");
-            const viewTree = document.getElementById("viewTree");
-            const viewList = document.getElementById("viewList");
-
-            if (view === "tree") {
-                btnTree.className = "flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 bg-white text-indigo-900 shadow-sm";
-                btnList.className = "flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
-                viewTree.classList.remove("hidden");
-                viewList.classList.add("hidden");
-            } else {
-                btnList.className = "flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 bg-white text-indigo-900 shadow-sm";
-                btnTree.className = "flex-1 md:flex-initial px-4 py-2 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
-                viewList.classList.remove("hidden");
-                viewTree.classList.add("hidden");
-            }
-            renderCurrentView();
-        }
-
-        function renderCurrentView() {
-            if (currentView === "tree") {
-                renderTree();
-            } else {
-                renderList();
-            }
-        }
-
-        // RENDER POHON SILSILAH
-        function renderTree() {
-            const container = document.getElementById("treeContainer");
-            container.innerHTML = "";
-
-            const roots = familyData.filter(m => !m.parentId);
-            if (roots.length === 0 && familyData.length > 0) {
-                roots.push(familyData[0]);
-            }
-
-            if (familyData.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400">Belum ada data keluarga. Klik "Tambah Anggota" untuk memulai.</div>`;
-                return;
-            }
-
-            const treeWrapper = document.createElement("div");
-            treeWrapper.className = "flex gap-8 justify-center";
-
-            roots.forEach(root => {
-                treeWrapper.appendChild(createTreeNode(root));
-            });
-
-            container.appendChild(treeWrapper);
-            lucide.createIcons();
-        }
-
-        function createTreeNode(member) {
-            const node = document.createElement("div");
-            node.className = "flex flex-col items-center";
-
-            const spouse = familyData.find(m => m.id === member.spouseId);
-            const children = familyData.filter(m => m.parentId === member.id || (spouse && m.parentId === spouse.id));
-
-            // Card Member & Spouse
-            const cardWrapper = document.createElement("div");
-            cardWrapper.className = "flex items-center gap-2 relative z-10";
-
-            cardWrapper.appendChild(createMemberCard(member));
-            if (spouse) {
-                const ringIcon = document.createElement("div");
-                ringIcon.className = "text-amber-500 font-bold text-xs bg-amber-50 p-1 rounded-full border border-amber-200 shadow-sm";
-                ringIcon.innerHTML = `<i data-lucide="heart" class="w-3.5 h-3.5 fill-amber-500"></i>`;
-                cardWrapper.appendChild(ringIcon);
-                cardWrapper.appendChild(createMemberCard(spouse));
-            }
-
-            node.appendChild(cardWrapper);
-
-            // Render Children Node
-            if (children.length > 0) {
-                const lineV1 = document.createElement("div");
-                lineV1.className = "tree-line-v h-6";
-                node.appendChild(lineV1);
-
-                const childrenWrapper = document.createElement("div");
-                childrenWrapper.className = "flex gap-6 relative pt-4";
-
-                if (children.length > 1) {
-                    const lineH = document.createElement("div");
-                    lineH.className = "tree-line-h absolute top-0 left-1/2 -translate-x-1/2 w-[calc(100%-120px)]";
-                    childrenWrapper.appendChild(lineH);
-                }
-
-                children.forEach(child => {
-                    const childContainer = document.createElement("div");
-                    childContainer.className = "flex flex-col items-center relative";
-
-                    const lineV2 = document.createElement("div");
-                    lineV2.className = "tree-line-v h-4 absolute -top-4";
-                    childContainer.appendChild(lineV2);
-
-                    childContainer.appendChild(createTreeNode(child));
-                    childrenWrapper.appendChild(childContainer);
-                });
-
-                node.appendChild(childrenWrapper);
-            }
-
-            return node;
-        }
-
-        function createMemberCard(member) {
-            const card = document.createElement("div");
-            card.className = `bg-white border rounded-xl p-3 shadow-sm hover:shadow-md transition cursor-pointer w-48 flex flex-col items-center text-center relative ${
-                member.gender === "male" ? "border-blue-200 hover:border-blue-400" : "border-pink-200 hover:border-pink-400"
-            }`;
-            card.onclick = () => openDetailModal(member.id);
-
-            const photo = member.photoUrl || "https://via.placeholder.com/150";
-            const statusBadge = member.status === "alive" 
-                ? `<span class="w-2 h-2 rounded-full bg-emerald-500 absolute top-2 right-2" title="Masih Hidup"></span>` 
-                : `<span class="w-2 h-2 rounded-full bg-slate-400 absolute top-2 right-2" title="Almarhum/ah"></span>`;
-
-            card.innerHTML = `
+        card.innerHTML = `
                 ${statusBadge}
                 <img src="${photo}" alt="${member.name}" class="w-12 h-12 rounded-full object-cover border-2 border-slate-100 shadow-xs mb-2">
                 <div class="font-bold text-xs text-slate-800 line-clamp-1">${member.name}</div>
-                <div class="text-[10px] text-slate-400 mt-0.5">${member.birthPlace || 'Kota N/A'}</div>
-                ${member.address ? `<div class="text-[9px] text-slate-500 mt-1 line-clamp-1 flex items-center justify-center gap-1"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> ${member.address}</div>` : ''}
+                <div class="text-[10px] text-slate-400 mt-0.5">${member.birthPlace || "Kota N/A"}</div>
+                ${member.address ? `<div class="text-[9px] text-slate-500 mt-1 line-clamp-1 flex items-center justify-center gap-1"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> ${member.address}</div>` : ""}
             `;
-            return card;
+        return card;
+      }
+
+      // RENDER LIST VIEW
+      function renderList() {
+        const tbody = document.getElementById("listTableBody");
+        tbody.innerHTML = "";
+
+        const searchKey = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
+        const filterStatus = document.getElementById("filterStatus").value;
+
+        const filtered = familyData.filter((m) => {
+          const matchSearch =
+            m.name.toLowerCase().includes(searchKey) ||
+            (m.address && m.address.toLowerCase().includes(searchKey)) ||
+            (m.birthPlace && m.birthPlace.toLowerCase().includes(searchKey));
+          const matchStatus =
+            filterStatus === "all" || m.status === filterStatus;
+          return matchSearch && matchStatus;
+        });
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">Tidak ada data ditemukan.</td></tr>`;
+          return;
         }
 
-        // RENDER LIST VIEW
-        function renderList() {
-            const tbody = document.getElementById("listTableBody");
-            tbody.innerHTML = "";
+        filtered.forEach((m) => {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-50 transition";
 
-            const searchKey = document.getElementById("searchInput").value.toLowerCase();
-            const filterStatus = document.getElementById("filterStatus").value;
+          const photo = m.photoUrl || "https://via.placeholder.com/150";
+          const genderIcon =
+            m.gender === "male"
+              ? `<span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs">Laki-laki</span>`
+              : `<span class="text-pink-600 bg-pink-50 px-2 py-0.5 rounded text-xs">Perempuan</span>`;
 
-            const filtered = familyData.filter(m => {
-                const matchSearch = m.name.toLowerCase().includes(searchKey) || 
-                                    (m.address && m.address.toLowerCase().includes(searchKey)) ||
-                                    (m.birthPlace && m.birthPlace.toLowerCase().includes(searchKey));
-                const matchStatus = filterStatus === "all" || m.status === filterStatus;
-                return matchSearch && matchStatus;
-            });
+          const statusTag =
+            m.status === "alive"
+              ? `<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-xs">Hidup</span>`
+              : `<span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-xs">Almarhum/ah</span>`;
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">Tidak ada data ditemukan.</td></tr>`;
-                return;
-            }
+          let actionButtons = `<button onclick="openDetailModal('${m.id}')" class="text-indigo-600 hover:text-indigo-800 font-medium text-xs px-2 py-1">Detail</button>`;
 
-            filtered.forEach(m => {
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-slate-50 transition";
-
-                const photo = m.photoUrl || "https://via.placeholder.com/150";
-                const genderIcon = m.gender === "male" 
-                    ? `<span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs">Laki-laki</span>`
-                    : `<span class="text-pink-600 bg-pink-50 px-2 py-0.5 rounded text-xs">Perempuan</span>`;
-
-                const statusTag = m.status === "alive"
-                    ? `<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-xs">Hidup</span>`
-                    : `<span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-xs">Almarhum/ah</span>`;
-
-                let actionButtons = `<button onclick="openDetailModal('${m.id}')" class="text-indigo-600 hover:text-indigo-800 font-medium text-xs px-2 py-1">Detail</button>`;
-                
-                if (isAdmin) {
-                    actionButtons += `
+          if (isAdmin) {
+            actionButtons += `
                         <button onclick="openFormModal('${m.id}')" class="text-amber-600 hover:text-amber-800 font-medium text-xs px-2 py-1">Edit</button>
                         <button onclick="deleteMember('${m.id}')" class="text-red-600 hover:text-red-800 font-medium text-xs px-2 py-1">Hapus</button>
                     `;
-                }
+          }
 
-                tr.innerHTML = `
+          tr.innerHTML = `
                     <td class="p-4 flex items-center gap-3">
                         <img src="${photo}" class="w-9 h-9 rounded-full object-cover border border-slate-200">
                         <div class="font-semibold text-slate-800">${m.name}</div>
                     </td>
                     <td class="p-4">${genderIcon}</td>
                     <td class="p-4">${statusTag}</td>
-                    <td class="p-4 text-xs text-slate-600">${m.birthPlace || '-'}, ${m.birthDate || '-'}</td>
-                    <td class="p-4 text-xs text-slate-600 max-w-xs truncate">${m.address || '-'}</td>
+                    <td class="p-4 text-xs text-slate-600">${m.birthPlace || "-"}, ${m.birthDate || "-"}</td>
+                    <td class="p-4 text-xs text-slate-600 max-w-xs truncate">${m.address || "-"}</td>
                     <td class="p-4 text-center space-x-1">${actionButtons}</td>
                 `;
-                tbody.appendChild(tr);
-            });
+          tbody.appendChild(tr);
+        });
+      }
+
+      // SEARCH & FILTER HANDLERS
+      function handleSearch() {
+        renderCurrentView();
+      }
+
+      function handleFilter() {
+        renderCurrentView();
+      }
+
+      // FORM MODAL & FILE UPLOAD
+      function openFormModal(editId = null) {
+        const modal = document.getElementById("formModal");
+        const title = document.getElementById("formModalTitle");
+        const parentSelect = document.getElementById("formParentId");
+        const spouseSelect = document.getElementById("formSpouseId");
+
+        // Reset Options
+        parentSelect.innerHTML = `<option value="">-- Tanpa Orang Tua (Akar) --</option>`;
+        spouseSelect.innerHTML = `<option value="">-- Belum/Tidak Ada --</option>`;
+
+        familyData.forEach((m) => {
+          if (!editId || m.id !== editId) {
+            parentSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+            spouseSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+          }
+        });
+
+        if (editId) {
+          const m = familyData.find((item) => item.id === editId);
+          if (!m) return;
+          title.textContent = "Edit Anggota Keluarga";
+          document.getElementById("formId").value = m.id;
+          document.getElementById("formName").value = m.name;
+          document.getElementById("formGender").value = m.gender;
+          document.getElementById("formStatus").value = m.status;
+          document.getElementById("formBirthPlace").value = m.birthPlace || "";
+          document.getElementById("formBirthDate").value = m.birthDate || "";
+          document.getElementById("formPhotoUrl").value = m.photoUrl || "";
+          document.getElementById("formAddress").value = m.address || "";
+          document.getElementById("formParentId").value = m.parentId || "";
+          document.getElementById("formSpouseId").value = m.spouseId || "";
+          document.getElementById("formNotes").value = m.notes || "";
+          uploadedPhotoBase64 = "";
+        } else {
+          title.textContent = "Tambah Anggota Keluarga";
+          document.getElementById("memberForm").reset();
+          document.getElementById("formId").value = "";
+          uploadedPhotoBase64 = "";
         }
 
-        // SEARCH & FILTER HANDLERS
-        function handleSearch() {
-            renderCurrentView();
+        modal.classList.remove("hidden");
+      }
+
+      function closeFormModal() {
+        document.getElementById("formModal").classList.add("hidden");
+      }
+
+      function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            uploadedPhotoBase64 = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      function handleFormSubmit(e) {
+        e.preventDefault();
+
+        const id =
+          document.getElementById("formId").value || Date.now().toString();
+        const name = document.getElementById("formName").value;
+        const gender = document.getElementById("formGender").value;
+        const status = document.getElementById("formStatus").value;
+        const birthPlace = document.getElementById("formBirthPlace").value;
+        const birthDate = document.getElementById("formBirthDate").value;
+        const photoUrlInput = document.getElementById("formPhotoUrl").value;
+        const address = document.getElementById("formAddress").value;
+        const parentId = document.getElementById("formParentId").value;
+        const spouseId = document.getElementById("formSpouseId").value;
+        const notes = document.getElementById("formNotes").value;
+
+        const photoUrl =
+          uploadedPhotoBase64 ||
+          photoUrlInput ||
+          "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
+
+        const newMember = {
+          id,
+          name,
+          gender,
+          status,
+          birthPlace,
+          birthDate,
+          photoUrl,
+          address,
+          parentId,
+          spouseId,
+          notes,
+        };
+
+        const existingIndex = familyData.findIndex((m) => m.id === id);
+        if (existingIndex > -1) {
+          familyData[existingIndex] = newMember;
+        } else {
+          familyData.push(newMember);
         }
 
-        function handleFilter() {
-            renderCurrentView();
+        // Sync Pasangan timbal balik
+        if (spouseId) {
+          const spouse = familyData.find((m) => m.id === spouseId);
+          if (spouse) spouse.spouseId = id;
         }
 
-        // FORM MODAL & FILE UPLOAD
-        function openFormModal(editId = null) {
-            const modal = document.getElementById("formModal");
-            const title = document.getElementById("formModalTitle");
-            const parentSelect = document.getElementById("formParentId");
-            const spouseSelect = document.getElementById("formSpouseId");
+        syncToRemoteDatabase();
+        closeFormModal();
+        renderCurrentView();
+      }
 
-            // Reset Options
-            parentSelect.innerHTML = `<option value="">-- Tanpa Orang Tua (Akar) --</option>`;
-            spouseSelect.innerHTML = `<option value="">-- Belum/Tidak Ada --</option>`;
+      // DETAIL MODAL & ACTIONS
+      function openDetailModal(id) {
+        const m = familyData.find((item) => item.id === id);
+        if (!m) return;
 
-            familyData.forEach(m => {
-                if (!editId || m.id !== editId) {
-                    parentSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
-                    spouseSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
-                }
-            });
+        document.getElementById("detailPhoto").src =
+          m.photoUrl || "https://via.placeholder.com/150";
+        document.getElementById("detailName").textContent = m.name;
+        document.getElementById("detailStatus").textContent =
+          m.status === "alive" ? "Masih Hidup" : "Almarhum/ah";
+        document.getElementById("detailAddress").textContent =
+          m.address || "Belum ada data alamat.";
+        document.getElementById("detailBirth").textContent =
+          `${m.birthPlace || "-"}, ${m.birthDate || "-"}`;
+        document.getElementById("detailGender").textContent =
+          m.gender === "male" ? "Laki-laki" : "Perempuan";
 
-            if (editId) {
-                const m = familyData.find(item => item.id === editId);
-                if (!m) return;
-                title.textContent = "Edit Anggota Keluarga";
-                document.getElementById("formId").value = m.id;
-                document.getElementById("formName").value = m.name;
-                document.getElementById("formGender").value = m.gender;
-                document.getElementById("formStatus").value = m.status;
-                document.getElementById("formBirthPlace").value = m.birthPlace || "";
-                document.getElementById("formBirthDate").value = m.birthDate || "";
-                document.getElementById("formPhotoUrl").value = m.photoUrl || "";
-                document.getElementById("formAddress").value = m.address || "";
-                document.getElementById("formParentId").value = m.parentId || "";
-                document.getElementById("formSpouseId").value = m.spouseId || "";
-                document.getElementById("formNotes").value = m.notes || "";
-                uploadedPhotoBase64 = "";
-            } else {
-                title.textContent = "Tambah Anggota Keluarga";
-                document.getElementById("memberForm").reset();
-                document.getElementById("formId").value = "";
-                uploadedPhotoBase64 = "";
-            }
+        const spouse = familyData.find((s) => s.id === m.spouseId);
+        document.getElementById("detailSpouse").textContent = spouse
+          ? spouse.name
+          : "Belum ada";
 
-            modal.classList.remove("hidden");
+        const children = familyData.filter(
+          (c) => c.parentId === m.id || (spouse && c.parentId === spouse.id),
+        );
+        const childrenContainer = document.getElementById("detailChildren");
+        childrenContainer.innerHTML = "";
+        if (children.length > 0) {
+          children.forEach((c) => {
+            childrenContainer.innerHTML += `<span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-medium">${c.name}</span>`;
+          });
+        } else {
+          childrenContainer.innerHTML = `<span class="text-slate-400 text-xs">Belum ada data anak</span>`;
         }
 
-        function closeFormModal() {
-            document.getElementById("formModal").classList.add("hidden");
-        }
+        document.getElementById("detailNotes").textContent =
+          m.notes || "Tidak ada catatan.";
 
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedPhotoBase64 = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+        const actions = document.getElementById("detailModalActions");
+        actions.innerHTML = `<button onclick="closeDetailModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium">Tutup</button>`;
 
-        function handleFormSubmit(e) {
-            e.preventDefault();
-
-            const id = document.getElementById("formId").value || Date.now().toString();
-            const name = document.getElementById("formName").value;
-            const gender = document.getElementById("formGender").value;
-            const status = document.getElementById("formStatus").value;
-            const birthPlace = document.getElementById("formBirthPlace").value;
-            const birthDate = document.getElementById("formBirthDate").value;
-            const photoUrlInput = document.getElementById("formPhotoUrl").value;
-            const address = document.getElementById("formAddress").value;
-            const parentId = document.getElementById("formParentId").value;
-            const spouseId = document.getElementById("formSpouseId").value;
-            const notes = document.getElementById("formNotes").value;
-
-            const photoUrl = uploadedPhotoBase64 || photoUrlInput || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
-
-            const newMember = {
-                id, name, gender, status, birthPlace, birthDate, photoUrl, address, parentId, spouseId, notes
-            };
-
-            const existingIndex = familyData.findIndex(m => m.id === id);
-            if (existingIndex > -1) {
-                familyData[existingIndex] = newMember;
-            } else {
-                familyData.push(newMember);
-            }
-
-            // Sync Pasangan timbal balik
-            if (spouseId) {
-                const spouse = familyData.find(m => m.id === spouseId);
-                if (spouse) spouse.spouseId = id;
-            }
-
-            syncToRemoteDatabase();
-            closeFormModal();
-            renderCurrentView();
-        }
-
-        // DETAIL MODAL & ACTIONS
-        function openDetailModal(id) {
-            const m = familyData.find(item => item.id === id);
-            if (!m) return;
-
-            document.getElementById("detailPhoto").src = m.photoUrl || "https://via.placeholder.com/150";
-            document.getElementById("detailName").textContent = m.name;
-            document.getElementById("detailStatus").textContent = m.status === "alive" ? "Masih Hidup" : "Almarhum/ah";
-            document.getElementById("detailAddress").textContent = m.address || "Belum ada data alamat.";
-            document.getElementById("detailBirth").textContent = `${m.birthPlace || '-'}, ${m.birthDate || '-'}`;
-            document.getElementById("detailGender").textContent = m.gender === "male" ? "Laki-laki" : "Perempuan";
-
-            const spouse = familyData.find(s => s.id === m.spouseId);
-            document.getElementById("detailSpouse").textContent = spouse ? spouse.name : "Belum ada";
-
-            const children = familyData.filter(c => c.parentId === m.id || (spouse && c.parentId === spouse.id));
-            const childrenContainer = document.getElementById("detailChildren");
-            childrenContainer.innerHTML = "";
-            if (children.length > 0) {
-                children.forEach(c => {
-                    childrenContainer.innerHTML += `<span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-medium">${c.name}</span>`;
-                });
-            } else {
-                childrenContainer.innerHTML = `<span class="text-slate-400 text-xs">Belum ada data anak</span>`;
-            }
-
-            document.getElementById("detailNotes").textContent = m.notes || "Tidak ada catatan.";
-
-            const actions = document.getElementById("detailModalActions");
-            actions.innerHTML = `<button onclick="closeDetailModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium">Tutup</button>`;
-
-            if (isAdmin) {
-                actions.innerHTML = `
+        if (isAdmin) {
+          actions.innerHTML = `
                     <button onclick="closeDetailModal(); openFormModal('${m.id}')" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium">Edit</button>
                     <button onclick="closeDetailModal(); deleteMember('${m.id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium">Hapus</button>
                     <button onclick="closeDetailModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium">Tutup</button>
                 `;
-            }
-
-            document.getElementById("detailModal").classList.remove("hidden");
-            lucide.createIcons();
         }
 
-        function closeDetailModal() {
-            document.getElementById("detailModal").classList.add("hidden");
+        document.getElementById("detailModal").classList.remove("hidden");
+        lucide.createIcons();
+      }
+
+      function closeDetailModal() {
+        document.getElementById("detailModal").classList.add("hidden");
+      }
+
+      // DELETE MEMBER (WITH CASCADE CLEANUP)
+      function deleteMember(id) {
+        if (!isAdmin) {
+          alert("Akses ditolak! Hanya Admin yang dapat menghapus data.");
+          return;
         }
 
-        // DELETE MEMBER (WITH CASCADE CLEANUP)
-        function deleteMember(id) {
-            if (!isAdmin) {
-                alert("Akses ditolak! Hanya Admin yang dapat menghapus data.");
-                return;
-            }
+        const member = familyData.find((m) => m.id === id);
+        if (!member) return;
 
-            const member = familyData.find(m => m.id === id);
-            if (!member) return;
+        if (
+          confirm(`Apakah Anda yakin ingin menghapus data "${member.name}"?`)
+        ) {
+          // Cascade Cleanup: Relasi Pasangan
+          familyData.forEach((m) => {
+            if (m.spouseId === id) m.spouseId = "";
+            if (m.parentId === id) m.parentId = "";
+          });
 
-            if (confirm(`Apakah Anda yakin ingin menghapus data "${member.name}"?`)) {
-                // Cascade Cleanup: Relasi Pasangan
-                familyData.forEach(m => {
-                    if (m.spouseId === id) m.spouseId = "";
-                    if (m.parentId === id) m.parentId = "";
-                });
-
-                familyData = familyData.filter(m => m.id !== id);
-                syncToRemoteDatabase();
-                renderCurrentView();
-            }
+          familyData = familyData.filter((m) => m.id !== id);
+          syncToRemoteDatabase();
+          renderCurrentView();
         }
+      }
 
-        // DATABASE INSTRUCTION & CONFIG MODAL
-        function openScriptInstructionModal() {
-            document.getElementById("scriptUrlInput").value = scriptUrl;
-            document.getElementById("scriptInstructionModal").classList.remove("hidden");
-        }
+      // DATABASE INSTRUCTION & CONFIG MODAL
+      function openScriptInstructionModal() {
+        document.getElementById("scriptUrlInput").value = scriptUrl;
+        document
+          .getElementById("scriptInstructionModal")
+          .classList.remove("hidden");
+      }
 
-        function closeScriptInstructionModal() {
-            document.getElementById("scriptInstructionModal").classList.add("hidden");
-        }
+      function closeScriptInstructionModal() {
+        document
+          .getElementById("scriptInstructionModal")
+          .classList.add("hidden");
+      }
 
-        function saveScriptUrl() {
-            const url = document.getElementById("scriptUrlInput").value.trim();
-            scriptUrl = url;
-            localStorage.setItem("familyTreeScriptUrl", url);
-            checkScriptUrlStatus();
-            closeScriptInstructionModal();
-            loadData();
-        }
+      function saveScriptUrl() {
+        const url = document.getElementById("scriptUrlInput").value.trim();
+        scriptUrl = url;
+        localStorage.setItem("familyTreeScriptUrl", url);
+        checkScriptUrlStatus();
+        closeScriptInstructionModal();
+        loadData();
+      }
 
-        function copyAppsScriptCode() {
-            const code = document.getElementById("appsScriptCode").innerText;
-            navigator.clipboard.writeText(code);
-            alert("Kode Apps Script berhasil disalin ke clipboard!");
-        }
+      function copyAppsScriptCode() {
+        const code = document.getElementById("appsScriptCode").innerText;
+        navigator.clipboard.writeText(code);
+        alert("Kode Apps Script berhasil disalin ke clipboard!");
+      }
     </script>
-</body>
+  </body>
 </html>

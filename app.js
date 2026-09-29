@@ -4,6 +4,18 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxK_oVv7EJj3C1rY4IlO
 
 let isAdmin = false;
 let membersData = [];
+// Deklarasikan familyData di bagian paling atas app.js
+let familyData = []; 
+
+// Jika Anda menyimpan data di LocalStorage, muat saat pertama kali dibuka:
+const savedData = localStorage.getItem('familyTreeData');
+if (savedData) {
+  try {
+    familyData = JSON.parse(savedData);
+  } catch (e) {
+    console.error("Gagal membaca data dari LocalStorage", e);
+  }
+}
 
 // Helper Convert File to Base64
 const toBase64 = file => new Promise((resolve, reject) => {
@@ -104,13 +116,13 @@ function createNodeHTML(member) {
         <div class="relative-dropdown">
           <button class="btn-link add-btn" onclick="toggleDropdown('${member.id}')">+ Kerabat</button>
           <div class="dropdown-menu" id="dropdown-${member.id}">
-            <button class="dropdown-item" onclick="openAddRelativeModal('${member.full_name}', 'child')">
+            <button class="dropdown-item" onclick="('${member.full_name}', 'child')">
               <span>🧍</span> Tambah Anak
             </button>
-            <button class="dropdown-item" onclick="openAddRelativeModal('${member.full_name}', 'spouse')">
+            <button class="dropdown-item" onclick="('${member.full_name}', 'spouse')">
               <span>🩷</span> Tambah Pasangan
             </button>
-            <button class="dropdown-item" onclick="openAddRelativeModal('${member.full_name}', 'parent')">
+            <button class="dropdown-item" onclick="('${member.full_name}', 'parent')">
               <span>👨‍👩‍👦</span> Tambah Orang Tua
             </button>
           </div>
@@ -197,61 +209,54 @@ function buildTreeNode(member, processedSet) {
   return li;
 }
 
-// Data anggota keluarga (contoh referensi data)
-// misal targetPerson diambil dari database/array berdasarkan ID
 function openAddRelativeModal(targetPersonId, relationType) {
-  // 1. Ambil data orang yang diklik (misal: KAIDI)
-  const targetPerson = familyData.find(person => person.id === targetPersonId);
-  if (!targetPerson) return;
+  // Pastikan familyData bernilai array
+  if (!Array.isArray(familyData)) {
+    familyData = [];
+  }
 
-  // 2. Ambil elemen-elemen form modal
+  // Cari data orang yang diklik
+  const targetPerson = familyData.find(person => person.id == targetPersonId);
+
+  // Ambil elemen form
   const modalTitle = document.getElementById('modalTitle');
   const genderSelect = document.getElementById('genderSelect');
   const parentSelect = document.getElementById('parentSelect');
   const spouseSelect = document.getElementById('spouseSelect');
 
-  // Reset form terlebih dahulu
-  document.getElementById('relativeForm').reset();
+  // Jika modal/form dibuka dari tombol "+ Tambah Anggota" biasa (tanpa targetPerson)
+  if (!targetPerson) {
+    if (modalTitle) modalTitle.innerText = "+ Tambah Anggota Silsilah";
+    // Reset isi pilihan
+    if (genderSelect) genderSelect.value = "Laki-laki";
+    if (parentSelect) parentSelect.value = "";
+    if (spouseSelect) spouseSelect.value = "";
+  } else {
+    // Jika dibuka dari tombol relasi (+ Pasangan, + Anak, dst.)
+    if (relationType === 'spouse') {
+      if (modalTitle) modalTitle.innerText = `+ Tambah Pasangan dari ${targetPerson.nama}`;
+      
+      // Otomatis set jenis kelamin berlawanan
+      if (genderSelect) {
+        genderSelect.value = (targetPerson.jenisKelamin === 'Laki-laki') ? 'Perempuan' : 'Laki-laki';
+      }
+      
+      // Otomatis set nama pasangan
+      if (spouseSelect) spouseSelect.value = targetPerson.id;
+      if (parentSelect) parentSelect.value = "";
 
-  // 3. Logika Isi Otomatis Berdasarkan Tipe Hubungan
-  if (relationType === 'spouse') {
-    // A. Tambah Pasangan
-    modalTitle.innerText = `+ Tambah Pasangan dari ${targetPerson.nama}`;
-
-    // Otomatis set jenis kelamin lawan dari target
-    // Jika KAIDI Laki-laki -> Pasangan otomatis Perempuan
-    genderSelect.value = targetPerson.jenisKelamin === 'Laki-laki' ? 'Perempuan' : 'Laki-laki';
-
-    // Set Pasangan otomatis ke targetPerson
-    spouseSelect.value = targetPerson.id;
-
-    // Kosongkan Orang Tua (karena pasangan biasanya dari silsilah lain)
-    parentSelect.value = '';
-
-  } else if (relationType === 'child') {
-    // B. Tambah Anak
-    modalTitle.innerText = `+ Tambah Anak dari ${targetPerson.nama}`;
-
-    // Default Jenis Kelamin (bisa diset Laki-laki dulu)
-    genderSelect.value = 'Laki-laki';
-
-    // Set Orang Tua otomatis ke targetPerson
-    parentSelect.value = targetPerson.id;
-
-    // Kosongkan Pasangan
-    spouseSelect.value = '';
-
-  } else if (relationType === 'parent') {
-    // C. Tambah Orang Tua
-    modalTitle.innerText = `+ Tambah Orang Tua dari ${targetPerson.nama}`;
-    
-    genderSelect.value = 'Laki-laki'; // Default Ayah
-    spouseSelect.value = targetPerson.pasanganId || '';
-    parentSelect.value = '';
+    } else if (relationType === 'child') {
+      if (modalTitle) modalTitle.innerText = `+ Tambah Anak dari ${targetPerson.nama}`;
+      if (parentSelect) parentSelect.value = targetPerson.id;
+      if (spouseSelect) spouseSelect.value = "";
+    }
   }
 
   // Tampilkan Modal
-  document.getElementById('addModal').classList.add('show');
+  const modalElement = document.getElementById('addModal'); // Sesuaikan ID modal Anda
+  if (modalElement) {
+    modalElement.style.display = 'block'; // Atau .classList.add('show');
+  }
 }
 
 // Buka Modal Form Utama

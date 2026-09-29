@@ -42,10 +42,10 @@ body.admin-mode .status-badge {
 
 .container {
   display: grid;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 320px 1fr;
   gap: 20px;
   padding: 20px;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -118,84 +118,158 @@ body.admin-mode .status-badge {
   margin-top: 5px;
 }
 
-/* Grid Kartu Member */
-.member-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
+/* ====================================
+   DESAIN POHON SILSILAH DENGAN GARIS
+   ==================================== */
+.tree-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+
+.tree ul {
+  padding-top: 20px; 
+  position: relative;
+  transition: all 0.5s;
+  display: flex;
+  justify-content: center;
+}
+
+.tree li {
+  float: left; 
+  text-align: center;
+  list-style-type: none;
+  position: relative;
+  padding: 20px 5px 0 5px;
+  transition: all 0.5s;
+}
+
+/* Garis penghubung atas */
+.tree li::before, .tree li::after {
+  content: '';
+  position: absolute; 
+  top: 0; 
+  right: 50%;
+  border-top: 2px solid #34495e;
+  width: 50%; 
+  height: 20px;
+}
+
+.tree li::after {
+  right: auto; 
+  left: 50%;
+  border-left: 2px solid #34495e;
+}
+
+/* Hilangkan garis ekstra di elemen pertama dan terakhir */
+.tree li:only-child::after, .tree li:only-child::before {
+  display: none;
+}
+
+.tree li:only-child { 
+  padding-top: 0;
+}
+
+.tree li:first-child::before, .tree li:last-child::after {
+  border: none;
+}
+
+.tree li:last-child::before {
+  border-right: 2px solid #34495e;
+  border-radius: 0 5px 0 0;
+}
+
+.tree li:first-child::after {
+  border-radius: 5px 0 0 0;
+}
+
+/* Garis vertikal dari orang tua ke anak */
+.tree ul ul::before {
+  content: '';
+  position: absolute; 
+  top: 0; 
+  left: 50%;
+  border-left: 2px solid #34495e;
+  width: 0; 
+  height: 20px;
+}
+
+/* Desain Kartu Member */
+.member-card-container {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
 }
 
 .member-card {
-  border: 1px solid #e0e0e0;
+  border: 2px solid #34495e;
+  padding: 10px;
   border-radius: 8px;
-  padding: 15px;
-  background-color: #fff;
+  background: #ffffff;
+  display: inline-block;
+  min-width: 170px;
+  max-width: 200px;
   position: relative;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  border-left: 5px solid #3498db;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  text-align: center;
 }
 
 .member-card.female {
-  border-left-color: #e91e63;
+  border-color: #e91e63;
+}
+
+.member-card.spouse-card {
+  border-style: dashed;
+  background-color: #fff9f9;
 }
 
 .profile-img {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
-  display: block;
-  margin: 0 auto 10px;
+  margin: 0 auto 6px;
   border: 2px solid #ddd;
 }
 
 .member-card h3 {
-  text-align: center;
-  font-size: 1.1rem;
-  margin-bottom: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
   color: #2c3e50;
 }
 
 .member-card p {
-  font-size: 0.85rem;
-  color: #666;
-  margin-bottom: 4px;
+  font-size: 0.75rem;
+  color: #555;
+  margin-bottom: 2px;
 }
 
 .badge {
   display: inline-block;
-  padding: 3px 8px;
-  font-size: 0.75rem;
-  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 0.68rem;
+  border-radius: 10px;
   background-color: #e8f5e9;
   color: #2e7d32;
-  margin-top: 5px;
-}
-
-.timestamp {
-  font-size: 0.7rem;
-  color: #999;
-  margin-top: 10px;
-  border-top: 1px dashed #eee;
-  padding-top: 5px;
+  margin-top: 4px;
 }
 
 .action-btns {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 5px;
+  right: 5px;
   display: none;
 }
 
 body.admin-mode .action-btns {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .btn-action {
-  padding: 2px 6px;
-  font-size: 0.75rem;
+  padding: 1px 4px;
+  font-size: 0.65rem;
   border: none;
   border-radius: 3px;
   cursor: pointer;
@@ -207,13 +281,13 @@ body.admin-mode .action-btns {
 
 .btn-add-relative {
   width: 100%;
-  padding: 6px;
-  margin-top: 10px;
+  padding: 4px;
+  margin-top: 6px;
   background-color: #3498db;
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: bold;
   cursor: pointer;
 }

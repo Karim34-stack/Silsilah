@@ -31,7 +31,7 @@ function toggleAdmin() {
   document.body.classList.toggle('admin-mode', isAdmin);
 }
 
-// Load Data dari Google Sheets
+// Load Data
 async function loadMembers() {
   const loadingEl = document.getElementById('loading');
   if (loadingEl) loadingEl.style.display = 'block';
@@ -57,7 +57,23 @@ async function loadMembers() {
   }
 }
 
-// Fungsi Membuat HTML Node Individu
+// Menutup semua dropdown jika klik di luar
+window.addEventListener('click', function(e) {
+  if (!e.target.matches('.add-btn')) {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
+  }
+});
+
+// Toggle Menu Dropdown + Kerabat
+function toggleDropdown(id) {
+  document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    if (menu.id !== `dropdown-${id}`) menu.classList.remove('show');
+  });
+  const currentMenu = document.getElementById(`dropdown-${id}`);
+  if (currentMenu) currentMenu.classList.toggle('show');
+}
+
+// Function Membuat HTML Node Individu
 function createNodeHTML(member) {
   const isFemale = member.gender === 'Perempuan';
   const defaultAvatar = isFemale 
@@ -70,7 +86,7 @@ function createNodeHTML(member) {
   return `
     <div class="member-node ${isFemale ? 'female' : 'male'}">
       <div class="admin-action-btns">
-        <button class="btn-admin edit" onclick="openEditModal('${member.id}')">✏️</button>
+        <button class="btn-admin edit" onclick="openMemberModal('edit', '${member.id}')">✏️</button>
         <button class="btn-admin del" onclick="deleteMember('${member.id}')">🗑️</button>
       </div>
       <div class="node-header">
@@ -85,13 +101,26 @@ function createNodeHTML(member) {
       </div>
       <div class="node-actions">
         <button class="btn-link" onclick="showDetail('${member.id}')">Detail Kerabat</button>
-        <button class="btn-link add" onclick="quickAddRelative('${member.full_name}')">+ Kerabat</button>
+        <div class="relative-dropdown">
+          <button class="btn-link add-btn" onclick="toggleDropdown('${member.id}')">+ Kerabat</button>
+          <div class="dropdown-menu" id="dropdown-${member.id}">
+            <button class="dropdown-item" onclick="openAddRelativeModal('${member.full_name}', 'child')">
+              <span>🧍</span> Tambah Anak
+            </button>
+            <button class="dropdown-item" onclick="openAddRelativeModal('${member.full_name}', 'spouse')">
+              <span>🩷</span> Tambah Pasangan
+            </button>
+            <button class="dropdown-item" onclick="openAddRelativeModal('${member.full_name}', 'parent')">
+              <span>👨‍👩‍👦</span> Tambah Orang Tua
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   `;
 }
 
-// Render Pohon Silsilah Utama (Bebas Duplikasi)
+// Render Pohon Silsilah Utama
 function renderTree() {
   const container = document.getElementById('treeContainer');
   container.innerHTML = '';
@@ -103,12 +132,10 @@ function renderTree() {
 
   const processedSet = new Set();
 
-  // Cari Leluhur Teratas (Orang tua yang tidak terdaftar sebagai anak dari siapapun)
   const roots = membersData.filter(m => {
     return !m.parent_name || m.parent_name === '-' || !membersData.some(p => p.full_name === m.parent_name);
   });
 
-  // Urutkan Leluhur: Paling Tua di KANAN, Paling Muda di KIRI
   roots.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   const ul = document.createElement('ul');
@@ -119,7 +146,6 @@ function renderTree() {
     }
   });
 
-  // Tangani anggota terlantar (jika ada data melayang)
   membersData.forEach(m => {
     if (!processedSet.has(m.full_name)) {
       ul.appendChild(buildTreeNode(m, processedSet));
@@ -129,7 +155,7 @@ function renderTree() {
   container.appendChild(ul);
 }
 
-// Fungsi Rekursif Membangun Cabang Silsilah
+// Rekursif Pohon Silsilah
 function buildTreeNode(member, processedSet) {
   processedSet.add(member.full_name);
 
@@ -137,10 +163,8 @@ function buildTreeNode(member, processedSet) {
   const coupleWrapper = document.createElement('div');
   coupleWrapper.className = 'couple-wrapper';
 
-  // Rendernode utama
   coupleWrapper.innerHTML = createNodeHTML(member);
 
-  // Jika memiliki pasangan terdaftar,gabungkan dalam couple-wrapper tanpa membuat node terpisah
   let spouseMember = null;
   if (member.spouse_name && member.spouse_name !== '-') {
     spouseMember = membersData.find(m => m.full_name === member.spouse_name);
@@ -152,14 +176,12 @@ function buildTreeNode(member, processedSet) {
 
   li.appendChild(coupleWrapper);
 
-  // Cari Anak dari Individu atau Pasangannya
   const children = membersData.filter(m => {
     const isChildOfMember = m.parent_name === member.full_name;
     const isChildOfSpouse = spouseMember && m.parent_name === spouseMember.full_name;
     return (isChildOfMember || isChildOfSpouse) && !processedSet.has(m.full_name);
   });
 
-  // Urutkan Anak: Paling Tua (Anak ke-1) di KANAN, Paling Muda di KIRI
   children.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   if (children.length > 0) {
@@ -173,75 +195,55 @@ function buildTreeNode(member, processedSet) {
   return li;
 }
 
-// Tampilkan Detail Kerabat
-function showDetail(id) {
-  const member = membersData.find(m => m.id === id);
-  if (!member) return;
-
-  alert(
-    `📌 DETAIL KERABAT:\n\n` +
-    `Nama Lengkap: ${member.full_name}\n` +
-    `Jenis Kelamin: ${member.gender}\n` +
-    `Orang Tua: ${member.parent_name || '-'}\n` +
-    `Pasangan: ${member.spouse_name || '-'}\n` +
-    `Anak Ke-: ${member.child_order || '-'}\n` +
-    `Status: ${member.status}`
-  );
-}
-
-// Dropdown Pilihan Anggota
-function updateMemberDropdowns() {
-  const dropdowns = document.querySelectorAll('.member-dropdown');
-  dropdowns.forEach(select => {
-    const currentValue = select.value;
-    const isParentDropdown = select.id.includes('parent');
-    
-    select.innerHTML = isParentDropdown 
-      ? '<option value="-">-- Pilih Orang Tua (Jika ada) --</option>' 
-      : '<option value="-">-- Pilih Pasangan (Jika ada) --</option>';
-
-    membersData.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.full_name;
-      opt.innerText = m.full_name;
-      select.appendChild(opt);
-    });
-    select.value = currentValue;
-  });
-}
-
-// Quick Add Relative
-function quickAddRelative(targetName) {
-  const relType = prompt(
-    `Tambahkan hubungan untuk ${targetName}:\n\n1 = Anak (Sebutkan ${targetName} sebagai Orang Tua)\n2 = Pasangan (Sebutkan ${targetName} sebagai Pasangan)\n\nMasukkan angka (1/2):`
-  );
-
-  if (relType === '1') {
-    resetForm();
+// Buka Modal Tambah Kerabat secara Spesifik
+function openAddRelativeModal(targetName, relType) {
+  openMemberModal('add');
+  
+  if (relType === 'child') {
     document.getElementById('parent_name').value = targetName;
-    document.getElementById('formTitle').innerText = `+ Tambah Anak dari ${targetName}`;
-    document.getElementById('btnCancel').style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } else if (relType === '2') {
-    resetForm();
+    document.getElementById('modalTitle').innerText = `+ Tambah Anak dari ${targetName}`;
+  } else if (relType === 'spouse') {
     document.getElementById('spouse_name').value = targetName;
-    document.getElementById('formTitle').innerText = `+ Tambah Pasangan dari ${targetName}`;
-    document.getElementById('btnCancel').style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('modalTitle').innerText = `+ Tambah Pasangan dari ${targetName}`;
+  } else if (relType === 'parent') {
+    document.getElementById('modalTitle').innerText = `+ Tambah Orang Tua dari ${targetName}`;
   }
 }
 
-// Reset Form
-function resetForm() {
-  document.getElementById('addMemberForm').reset();
-  document.getElementById('formTitle').innerText = "+ Tambah Anggota Keluarga";
-  document.getElementById('btnCancel').style.display = 'none';
+// Buka Modal Tambah / Edit Anggota
+function openMemberModal(mode, id = null) {
+  document.getElementById('memberForm').reset();
+  document.getElementById('form_action').value = mode;
+
+  if (mode === 'add') {
+    document.getElementById('modalTitle').innerText = "+ Tambah Anggota Keluarga";
+  } else if (mode === 'edit') {
+    if (!isAdmin) return;
+    const member = membersData.find(m => m.id === id);
+    if (!member) return;
+
+    document.getElementById('modalTitle').innerText = "Edit Data Anggota";
+    document.getElementById('form_id').value = member.id;
+    document.getElementById('full_name').value = member.full_name;
+    document.getElementById('gender').value = member.gender;
+    document.getElementById('parent_name').value = member.parent_name || '-';
+    document.getElementById('spouse_name').value = member.spouse_name || '-';
+    document.getElementById('child_order').value = member.child_order || '';
+    document.getElementById('status').value = member.status;
+  }
+
+  document.getElementById('memberModal').style.display = 'flex';
 }
 
-// Submit Form Tambah
-document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
+function closeMemberModal() {
+  document.getElementById('memberModal').style.display = 'none';
+}
+
+// Submit Form CRUD
+document.getElementById('memberForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnSubmit');
+  const action = document.getElementById('form_action').value;
   
   const photoFileInput = document.getElementById('photo_file');
   let photoBase64 = "";
@@ -264,7 +266,8 @@ document.getElementById('addMemberForm').addEventListener('submit', async (e) =>
   }
 
   const payload = {
-    action: "add",
+    action: action,
+    id: document.getElementById('form_id').value,
     full_name: document.getElementById('full_name').value,
     gender: document.getElementById('gender').value,
     parent_name: document.getElementById('parent_name').value,
@@ -281,8 +284,8 @@ document.getElementById('addMemberForm').addEventListener('submit', async (e) =>
     });
     
     if (response.ok) {
-      alert("Data berhasil disimpan!");
-      resetForm();
+      alert(action === 'add' ? "Data berhasil disimpan!" : "Data berhasil diperbarui!");
+      closeMemberModal();
       await loadMembers();
     } else {
       alert("Terjadi kesalahan dari server.");
@@ -292,66 +295,6 @@ document.getElementById('addMemberForm').addEventListener('submit', async (e) =>
     alert("Gagal menyimpan data.");
   } finally {
     btn.innerText = "Simpan Data";
-    btn.disabled = false;
-  }
-});
-
-// Modal Edit (Admin)
-function openEditModal(id) {
-  if (!isAdmin) return;
-  const member = membersData.find(m => m.id === id);
-  if (!member) return;
-
-  document.getElementById('edit_id').value = member.id;
-  document.getElementById('edit_full_name').value = member.full_name;
-  document.getElementById('edit_gender').value = member.gender;
-  document.getElementById('edit_parent_name').value = member.parent_name || '-';
-  document.getElementById('edit_spouse_name').value = member.spouse_name || '-';
-  document.getElementById('edit_child_order').value = member.child_order || '';
-  document.getElementById('edit_status').value = member.status;
-
-  document.getElementById('editModal').style.display = 'flex';
-}
-
-function closeEditModal() {
-  document.getElementById('editModal').style.display = 'none';
-}
-
-// Submit Edit
-document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('btnEditSubmit');
-  btn.innerText = "Memperbarui...";
-  btn.disabled = true;
-
-  const photoFileInput = document.getElementById('edit_photo_file');
-  let photoBase64 = "";
-
-  if (photoFileInput.files.length > 0) {
-    photoBase64 = await toBase64(photoFileInput.files[0]);
-  }
-
-  const payload = {
-    action: "edit",
-    id: document.getElementById('edit_id').value,
-    full_name: document.getElementById('edit_full_name').value,
-    gender: document.getElementById('edit_gender').value,
-    parent_name: document.getElementById('edit_parent_name').value,
-    spouse_name: document.getElementById('edit_spouse_name').value,
-    child_order: document.getElementById('edit_child_order').value,
-    status: document.getElementById('edit_status').value,
-    photo_base64: photoBase64
-  };
-
-  try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-    alert("Data berhasil diperbarui!");
-    closeEditModal();
-    await loadMembers();
-  } catch (err) {
-    alert("Gagal memperbarui data.");
-  } finally {
-    btn.innerText = "Update Data";
     btn.disabled = false;
   }
 });
@@ -373,5 +316,42 @@ async function deleteMember(id) {
   }
 }
 
-// Load data saat pertama dibuka
+// Detail Kerabat
+function showDetail(id) {
+  const member = membersData.find(m => m.id === id);
+  if (!member) return;
+
+  alert(
+    `📌 DETAIL KERABAT:\n\n` +
+    `Nama Lengkap: ${member.full_name}\n` +
+    `Jenis Kelamin: ${member.gender}\n` +
+    `Orang Tua: ${member.parent_name || '-'}\n` +
+    `Pasangan: ${member.spouse_name || '-'}\n` +
+    `Anak Ke-: ${member.child_order || '-'}\n` +
+    `Status: ${member.status}`
+  );
+}
+
+// Dropdown Options
+function updateMemberDropdowns() {
+  const dropdowns = document.querySelectorAll('.member-dropdown');
+  dropdowns.forEach(select => {
+    const currentValue = select.value;
+    const isParentDropdown = select.id.includes('parent');
+    
+    select.innerHTML = isParentDropdown 
+      ? '<option value="-">-- Pilih Orang Tua (Jika ada) --</option>' 
+      : '<option value="-">-- Pilih Pasangan (Jika ada) --</option>';
+
+    membersData.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.full_name;
+      opt.innerText = m.full_name;
+      select.appendChild(opt);
+    });
+    select.value = currentValue;
+  });
+}
+
+// Load data awal
 loadMembers();

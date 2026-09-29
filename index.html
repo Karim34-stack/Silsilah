@@ -18,7 +18,7 @@
 
   <div class="container">
     <!-- Form Utama (Tambah Anggota) -->
-    <div class="card">
+    <div class="card form-card">
       <h2 id="formTitle">+ Tambah Anggota Keluarga</h2>
       <form id="addMemberForm">
         <input type="hidden" id="formAction" value="add">
@@ -73,11 +73,13 @@
       </form>
     </div>
 
-    <!-- Daftar Anggota Keluarga -->
-    <div class="card">
-      <h2>Daftar Anggota Keluarga</h2>
+    <!-- Tampilan Pohon Silsilah -->
+    <div class="card tree-card">
+      <h2>Pohon Silsilah Keluarga</h2>
       <div id="loading" style="display:none; color: #888; font-style: italic;">Memuat data dari Google Sheets...</div>
-      <div class="member-grid" id="memberGrid"></div>
+      <div class="tree-wrapper" id="treeWrapper">
+        <div class="tree" id="treeContainer"></div>
+      </div>
     </div>
   </div>
 

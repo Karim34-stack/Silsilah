@@ -209,55 +209,7 @@ function buildTreeNode(member, processedSet) {
   return li;
 }
 
-function openAddRelativeModal(targetPersonId, relationType) {
-  // Pastikan familyData bernilai array
-  if (!Array.isArray(familyData)) {
-    familyData = [];
-  }
 
-  // Cari data orang yang diklik
-  const targetPerson = familyData.find(person => person.id == targetPersonId);
-
-  // Ambil elemen form
-  const modalTitle = document.getElementById('modalTitle');
-  const genderSelect = document.getElementById('genderSelect');
-  const parentSelect = document.getElementById('parentSelect');
-  const spouseSelect = document.getElementById('spouseSelect');
-
-  // Jika modal/form dibuka dari tombol "+ Tambah Anggota" biasa (tanpa targetPerson)
-  if (!targetPerson) {
-    if (modalTitle) modalTitle.innerText = "+ Tambah Anggota Silsilah";
-    // Reset isi pilihan
-    if (genderSelect) genderSelect.value = "Laki-laki";
-    if (parentSelect) parentSelect.value = "";
-    if (spouseSelect) spouseSelect.value = "";
-  } else {
-    // Jika dibuka dari tombol relasi (+ Pasangan, + Anak, dst.)
-    if (relationType === 'spouse') {
-      if (modalTitle) modalTitle.innerText = `+ Tambah Pasangan dari ${targetPerson.nama}`;
-      
-      // Otomatis set jenis kelamin berlawanan
-      if (genderSelect) {
-        genderSelect.value = (targetPerson.jenisKelamin === 'Laki-laki') ? 'Perempuan' : 'Laki-laki';
-      }
-      
-      // Otomatis set nama pasangan
-      if (spouseSelect) spouseSelect.value = targetPerson.id;
-      if (parentSelect) parentSelect.value = "";
-
-    } else if (relationType === 'child') {
-      if (modalTitle) modalTitle.innerText = `+ Tambah Anak dari ${targetPerson.nama}`;
-      if (parentSelect) parentSelect.value = targetPerson.id;
-      if (spouseSelect) spouseSelect.value = "";
-    }
-  }
-
-  // Tampilkan Modal
-  const modalElement = document.getElementById('addModal'); // Sesuaikan ID modal Anda
-  if (modalElement) {
-    modalElement.style.display = 'block'; // Atau .classList.add('show');
-  }
-}
 
 // Buka Modal Form Utama
 function openMemberModal(mode, id = null) {
@@ -401,6 +353,202 @@ function updateMemberDropdowns() {
     select.value = currentValue;
   });
 }
+// =========================================================
+// 1. INISIALISASI DATA KELUARGA (GLOBAL SCOPE)
+// =========================================================
+// Mengambil data dari LocalStorage, jika belum ada gunakan data awal/default
+const defaultFamilyData = [
+  { id: '1', nama: 'KYAI TOTARUNO', jenisKelamin: 'Laki-laki', orangTuaId: null, pasanganId: null, status: 'Wafat' },
+  { id: '2', nama: 'KARSODIKRO', jenisKelamin: 'Laki-laki', orangTuaId: '1', pasanganId: '3', status: 'Wafat' },
+  { id: '3', nama: 'SIAH', jenisKelamin: 'Perempuan', orangTuaId: null, pasanganId: '2', status: 'Wafat' },
+  { id: '4', nama: 'HARTO REJO', jenisKelamin: 'Laki-laki', orangTuaId: '2', pasanganId: null, status: 'Wafat' },
+  { id: '5', nama: 'MAR JI YEM', jenisKelamin: 'Laki-laki', orangTuaId: '2', pasanganId: null, status: 'Wafat' },
+  { id: '6', nama: 'PRAMUDJO S...', jenisKelamin: 'Laki-laki', orangTuaId: '2', pasanganId: null, status: 'Hidup' },
+  { id: '7', nama: 'DARMO SUKARTO', jenisKelamin: 'Laki-laki', orangTuaId: '2', pasanganId: null, status: 'Wafat' },
+  { id: '8', nama: 'RUBIKEM', jenisKelamin: 'Perempuan', orangTuaId: '7', pasanganId: null, anakKe: 9, status: 'Hidup' },
+  { id: '9', nama: 'SUNARDI', jenisKelamin: 'Laki-laki', orangTuaId: '7', pasanganId: null, status: 'Hidup' },
+  { id: '10', nama: 'KAIDI', jenisKelamin: 'Laki-laki', orangTuaId: '7', pasanganId: null, status: 'Hidup' },
+  { id: '11', nama: 'KEMIN', jenisKelamin: 'Laki-laki', orangTuaId: '7', pasanganId: null, status: 'Hidup' },
+  { id: '12', nama: 'SAPTO', jenisKelamin: 'Laki-laki', orangTuaId: '7', pasanganId: null, status: 'Hidup' }
+];
+
+window.familyData = JSON.parse(localStorage.getItem('familyTreeData')) || defaultFamilyData;
+
+// =========================================================
+// 2. MEMUAT PILIHAN DROPDOWN (ORANG TUA & PASANGAN)
+// =========================================================
+function populateDropdowns() {
+  const parentSelect = document.getElementById('parentSelect');
+  const spouseSelect = document.getElementById('spouseSelect');
+
+  if (!parentSelect || !spouseSelect) return;
+
+  // Bersihkan dropdown
+  parentSelect.innerHTML = '<option value="">-- Pilih Orang Tua (Jika ada) --</option>';
+  spouseSelect.innerHTML = '<option value="">-- Pilih Pasangan (Jika ada) --</option>';
+
+  window.familyData.forEach(person => {
+    // Isi Dropdown Orang Tua
+    const optParent = document.createElement('option');
+    optParent.value = person.id;
+    optParent.textContent = person.nama;
+    parentSelect.appendChild(optParent);
+
+    // Isi Dropdown Pasangan
+    const optSpouse = document.createElement('option');
+    optSpouse.value = person.id;
+    optSpouse.textContent = person.nama;
+    spouseSelect.appendChild(optSpouse);
+  });
+}
+
+// =========================================================
+// 3. FUNGSI MEMBUKA MODAL & OTOMATISASI FIELD
+// =========================================================
+function openAddRelativeModal(targetPersonId = null, relationType = null) {
+  populateDropdowns(); // Update list pilihan di dropdown
+
+  const modal = document.getElementById('addModal');
+  const form = document.getElementById('relativeForm');
+  const modalTitle = document.getElementById('modalTitle');
+
+  if (form) form.reset();
+
+  const nameInput = document.getElementById('namaInput');
+  const genderSelect = document.getElementById('genderSelect');
+  const parentSelect = document.getElementById('parentSelect');
+  const spouseSelect = document.getElementById('spouseSelect');
+
+  if (targetPersonId) {
+    const targetPerson = window.familyData.find(p => p.id == targetPersonId);
+
+    if (targetPerson) {
+      if (relationType === 'spouse') {
+        if (modalTitle) modalTitle.innerText = `+ Tambah Pasangan dari ${targetPerson.nama}`;
+        // Otomatis set Jenis Kelamin berlawanan
+        if (genderSelect) genderSelect.value = targetPerson.jenisKelamin === 'Laki-laki' ? 'Perempuan' : 'Laki-laki';
+        // Otomatis pilih Pasangan
+        if (spouseSelect) spouseSelect.value = targetPerson.id;
+        if (parentSelect) parentSelect.value = '';
+
+      } else if (relationType === 'child') {
+        if (modalTitle) modalTitle.innerText = `+ Tambah Anak dari ${targetPerson.nama}`;
+        // Otomatis pilih Orang Tua
+        if (parentSelect) parentSelect.value = targetPerson.id;
+        if (spouseSelect) spouseSelect.value = '';
+        if (genderSelect) genderSelect.value = 'Laki-laki';
+      }
+    }
+  } else {
+    if (modalTitle) modalTitle.innerText = '+ Tambah Anggota Silsilah';
+  }
+
+  if (modal) {
+    modal.style.display = 'block';
+    modal.classList.add('show');
+  }
+}
+
+// =========================================================
+// 4. FUNGSI SIMPAN DATA & UPDATE RELASI 2 ARAH
+// =========================================================
+function saveRelativeData(event) {
+  if (event) event.preventDefault();
+
+  const nameInput = document.getElementById('namaInput');
+  const genderSelect = document.getElementById('genderSelect');
+  const parentSelect = document.getElementById('parentSelect');
+  const spouseSelect = document.getElementById('spouseSelect');
+  const childNoInput = document.getElementById('anakKeInput');
+  const statusSelect = document.getElementById('statusSelect');
+
+  if (!nameInput || !nameInput.value.trim()) {
+    alert('Nama lengkap wajib diisi!');
+    return;
+  }
+
+  const newId = 'person_' + Date.now();
+
+  const newMember = {
+    id: newId,
+    nama: nameInput.value.trim().toUpperCase(),
+    jenisKelamin: genderSelect ? genderSelect.value : 'Laki-laki',
+    orangTuaId: parentSelect && parentSelect.value ? parentSelect.value : null,
+    pasanganId: spouseSelect && spouseSelect.value ? spouseSelect.value : null,
+    anakKe: childNoInput && childNoInput.value ? parseInt(childNoInput.value) : null,
+    status: statusSelect ? statusSelect.value : 'Masih Hidup'
+  };
+
+  // 1. Tambah data baru ke variabel global
+  window.familyData.push(newMember);
+
+  // 2. ⚠️ RELASI DUA ARAH: Update data target pasangan (misal RUBIKEM)
+  if (newMember.pasanganId) {
+    const spouse = window.familyData.find(p => p.id == newMember.pasanganId);
+    if (spouse) {
+      spouse.pasanganId = newMember.id; // RUBIKEM otomatis menyimpan ID pasangan baru
+    }
+  }
+
+  // 3. Simpan permanen ke LocalStorage
+  localStorage.setItem('familyTreeData', JSON.stringify(window.familyData));
+
+  // 4. Tutup Modal & Refresh Tampilan
+  closeModal();
+
+  if (typeof renderTree === 'function') {
+    renderTree();
+  } else {
+    location.reload();
+  }
+}
+
+// =========================================================
+// 5. FUNGSI MENAMPILKAN DETAIL KERABAT (ALERT / MODAL)
+// =========================================================
+function showDetailKerabat(personId) {
+  const person = window.familyData.find(p => p.id == personId);
+  if (!person) return;
+
+  const parent = window.familyData.find(p => p.id == person.orangTuaId);
+  const spouse = window.familyData.find(p => p.id == person.pasanganId);
+
+  const detailText = 
+`📌 DETAIL KERABAT:
+
+Nama Lengkap: ${person.nama}
+Jenis Kelamin: ${person.jenisKelamin}
+Orang Tua: ${parent ? parent.nama : '-'}
+Pasangan: ${spouse ? spouse.nama : '-'}
+Anak Ke-: ${person.anakKe || '-'}
+Status: ${person.status}`;
+
+  alert(detailText);
+}
+
+// =========================================================
+// 6. FUNGSI PENUTUP MODAL & EVENT LISTENER
+// =========================================================
+function closeModal() {
+  const modal = document.getElementById('addModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('relativeForm');
+  if (form) {
+    form.addEventListener('submit', saveRelativeData);
+  }
+  
+  // Event listener tombol close modal jika ada
+  const closeBtns = document.querySelectorAll('.close-modal, .btn-close');
+  closeBtns.forEach(btn => {
+    btn.addEventListener('click', closeModal);
+  });
+});
 
 function handleFormSubmit(event) {
   event.preventDefault();

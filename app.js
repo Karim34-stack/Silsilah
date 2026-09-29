@@ -197,19 +197,61 @@ function buildTreeNode(member, processedSet) {
   return li;
 }
 
-// Buka Modal Tambah Kerabat Spesifik
-function openAddRelativeModal(targetName, relType) {
-  openMemberModal('add');
-  
-  if (relType === 'child') {
-    document.getElementById('parent_name').value = targetName;
-    document.getElementById('modalTitle').innerText = `+ Tambah Anak dari ${targetName}`;
-  } else if (relType === 'spouse') {
-    document.getElementById('spouse_name').value = targetName;
-    document.getElementById('modalTitle').innerText = `+ Tambah Pasangan dari ${targetName}`;
-  } else if (relType === 'parent') {
-    document.getElementById('modalTitle').innerText = `+ Tambah Orang Tua dari ${targetName}`;
+// Data anggota keluarga (contoh referensi data)
+// misal targetPerson diambil dari database/array berdasarkan ID
+function openAddRelativeModal(targetPersonId, relationType) {
+  // 1. Ambil data orang yang diklik (misal: KAIDI)
+  const targetPerson = familyData.find(person => person.id === targetPersonId);
+  if (!targetPerson) return;
+
+  // 2. Ambil elemen-elemen form modal
+  const modalTitle = document.getElementById('modalTitle');
+  const genderSelect = document.getElementById('genderSelect');
+  const parentSelect = document.getElementById('parentSelect');
+  const spouseSelect = document.getElementById('spouseSelect');
+
+  // Reset form terlebih dahulu
+  document.getElementById('relativeForm').reset();
+
+  // 3. Logika Isi Otomatis Berdasarkan Tipe Hubungan
+  if (relationType === 'spouse') {
+    // A. Tambah Pasangan
+    modalTitle.innerText = `+ Tambah Pasangan dari ${targetPerson.nama}`;
+
+    // Otomatis set jenis kelamin lawan dari target
+    // Jika KAIDI Laki-laki -> Pasangan otomatis Perempuan
+    genderSelect.value = targetPerson.jenisKelamin === 'Laki-laki' ? 'Perempuan' : 'Laki-laki';
+
+    // Set Pasangan otomatis ke targetPerson
+    spouseSelect.value = targetPerson.id;
+
+    // Kosongkan Orang Tua (karena pasangan biasanya dari silsilah lain)
+    parentSelect.value = '';
+
+  } else if (relationType === 'child') {
+    // B. Tambah Anak
+    modalTitle.innerText = `+ Tambah Anak dari ${targetPerson.nama}`;
+
+    // Default Jenis Kelamin (bisa diset Laki-laki dulu)
+    genderSelect.value = 'Laki-laki';
+
+    // Set Orang Tua otomatis ke targetPerson
+    parentSelect.value = targetPerson.id;
+
+    // Kosongkan Pasangan
+    spouseSelect.value = '';
+
+  } else if (relationType === 'parent') {
+    // C. Tambah Orang Tua
+    modalTitle.innerText = `+ Tambah Orang Tua dari ${targetPerson.nama}`;
+    
+    genderSelect.value = 'Laki-laki'; // Default Ayah
+    spouseSelect.value = targetPerson.pasanganId || '';
+    parentSelect.value = '';
   }
+
+  // Tampilkan Modal
+  document.getElementById('addModal').classList.add('show');
 }
 
 // Buka Modal Form Utama

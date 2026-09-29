@@ -32,7 +32,7 @@ function toggleAdmin() {
   document.body.classList.toggle('admin-mode', isAdmin);
 }
 
-// Load Data
+// Load Data dengan Proteksi Error & Redirect
 async function loadMembers() {
   const loadingEl = document.getElementById('loading');
   if (loadingEl) loadingEl.style.display = 'block';
@@ -48,20 +48,13 @@ async function loadMembers() {
     }
 
     const dataText = await res.text();
-    
-    // Pengecekan jika respon yang kembali berupa JSON valid
-    try {
-      membersData = JSON.parse(dataText);
-    } catch (e) {
-      console.error("Respon bukan JSON valid:", dataText);
-      throw new Error("Respon dari Google Sheets bukan format JSON.");
-    }
+    membersData = JSON.parse(dataText);
 
     renderTree();
     updateMemberDropdowns();
   } catch (err) {
     console.error("Detail Error Fetching:", err);
-    alert("Gagal memuat data! Buka Console browser (F12) untuk melihat detail kesalahan.");
+    alert("Gagal memuat data! Periksa koneksi atau URL Web App.");
   } finally {
     if (loadingEl) loadingEl.style.display = 'none';
   }
@@ -91,35 +84,49 @@ function createCardHTML(member, isSpouse = false) {
   `;
 }
 
-// Render Silsilah Pohon Bergaris secara Rekursif
+// Render Silsilah Pohon Bergaris secara Aman dari Infinite Loop
 function renderTree() {
   const container = document.getElementById('treeContainer');
   container.innerHTML = '';
 
-  if (membersData.length === 0) {
+  if (!membersData || membersData.length === 0) {
     container.innerHTML = '<p style="color:#777;">Belum ada data anggota keluarga.</p>';
     return;
   }
+
+  // Set untuk mencatat ID/Nama anggota yang sudah dirender agar tidak terjadi perulangan tak terbatas
+  const visitedSet = new Set();
 
   // Cari anggota leluhur/paling atas (orang tua yang tidak punya orang tua terdaftar)
   const roots = membersData.filter(m => {
     return !m.parent_name || m.parent_name === '-' || !membersData.some(p => p.full_name === m.parent_name);
   });
 
-  // Urutkan leluhur: Anak/generasi paling tua di KANAN, muda di KIRI
+  // Urutkan leluhur: Anak/generasi paling tua di KANAN, muda di KIRI (Descending Order)
   roots.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   const ul = document.createElement('ul');
 
   roots.forEach(root => {
-    ul.appendChild(buildTreeNode(root));
+    if (!visitedSet.has(root.full_name)) {
+      ul.appendChild(buildTreeNode(root, visitedSet));
+    }
+  });
+
+  // Tampilkan juga anggota melayang (jika ada yang terlewat dari pohon utama)
+  membersData.forEach(m => {
+    if (!visitedSet.has(m.full_name)) {
+      ul.appendChild(buildTreeNode(m, visitedSet));
+    }
   });
 
   container.appendChild(ul);
 }
 
-// Fungsi Rekursif Membuat Node Pohon
-function buildTreeNode(member) {
+// Fungsi Rekursif Membuat Node Pohon (Aman dari Stack Overflow)
+function buildTreeNode(member, visitedSet) {
+  visitedSet.add(member.full_name);
+
   const li = document.createElement('li');
   const cardContainer = document.createElement('div');
   cardContainer.className = 'member-card-container';
@@ -127,10 +134,11 @@ function buildTreeNode(member) {
   // Kartu Utama
   cardContainer.innerHTML = createCardHTML(member);
 
-  // Jika punya pasangan yang terdaftar di database, tampilkan bersebelahan
+  // Tampilkan pasangan jika ada dan belum pernah di-render
   if (member.spouse_name && member.spouse_name !== '-') {
     const spouseObj = membersData.find(m => m.full_name === member.spouse_name);
     if (spouseObj) {
+      visitedSet.add(spouseObj.full_name);
       cardContainer.innerHTML += createCardHTML(spouseObj, true);
     }
   }
@@ -139,16 +147,17 @@ function buildTreeNode(member) {
 
   // Cari anak-anak dari anggota ini (atau dari pasangannya)
   const children = membersData.filter(m => {
-    return m.parent_name === member.full_name || (member.spouse_name && m.parent_name === member.spouse_name);
+    const matchesParent = m.parent_name === member.full_name || (member.spouse_name && m.parent_name === member.spouse_name);
+    return matchesParent && !visitedSet.has(m.full_name);
   });
 
-  // ATURAN URUTAN: Anak Paling Tua (Anak ke-1) di KANAN, Muda di KIRI (Descending Order)
+  // Urutkan anak: Tua di KANAN, Muda di KIRI (Descending Order)
   children.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   if (children.length > 0) {
     const childrenUl = document.createElement('ul');
     children.forEach(child => {
-      childrenUl.appendChild(buildTreeNode(child));
+      childrenUl.appendChild(buildTreeNode(child, visitedSet));
     });
     li.appendChild(childrenUl);
   }
@@ -303,10 +312,10 @@ document.getElementById('editMemberForm').addEventListener('submit', async (e) =
     id: document.getElementById('edit_id').value,
     full_name: document.getElementById('edit_full_name').value,
     gender: document.getElementById('edit_gender').value,
-    parent_name: document.getElementById('edit_parent_name').value,
-    spouse_name: document.getElementById('edit_spouse_name').value,
-    child_order: document.getElementById('edit_child_order').value,
-    status: document.getElementById('edit_status').value,
+    parent_name: document.getElementById('parent_name').value,
+    spouse_name: document.getElementById('spouse_name').value,
+    child_order: document.getElementById('child_order').value,
+    status: document.getElementById('status').value,
     photo_base64: photoBase64
   };
 

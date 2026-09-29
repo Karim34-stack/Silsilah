@@ -1,5 +1,5 @@
 // ⚠️ MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxe8QEmiMfC912-22hlqMA1_u1g0ncYPnzCPMSbTc_nYjZvSNTKxXJ6NbACjpaaoWkDVQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxK_oVv7EJj3C1rY4IlO5TWxp-N7-NCiRD6CCc27jBbline6DAwjKh2Yc4I5DSnOFT7PQ/exec";
 
 let isAdmin = false;
 let membersData = [];
@@ -38,7 +38,7 @@ async function loadMembers() {
     const res = await fetch(SCRIPT_URL);
     membersData = await res.json();
     renderMembers();
-    updateParentDropdowns();
+    updateMemberDropdowns();
   } catch (err) {
     console.error("Gagal mengambil data:", err);
     alert("Gagal memuat data!");
@@ -76,9 +76,11 @@ function renderMembers() {
       <img src="${photoSrc}" class="profile-img" alt="${member.full_name}" onerror="this.src='${defaultAvatar}'">
       <h3>${member.full_name}</h3>
       <p><strong>Kelamin:</strong> ${member.gender}</p>
-      <p><strong>Anak Dari:</strong> ${member.parent_name}</p>
-      <p><strong>Tahun Lahir:</strong> ${member.birth_year}</p>
+      <p><strong>Orang Tua:</strong> ${member.parent_name || '-'}</p>
+      <p><strong>Pasangan:</strong> ${member.spouse_name || '-'}</p>
+      <p><strong>Anak Ke-:</strong> ${member.child_order || '-'}</p>
       <span class="badge">${member.status}</span>
+      <button class="btn-add-relative" onclick="quickAddRelative('${member.full_name}')">+ Tambah Kerabat</button>
       <div class="timestamp">
         Dibuat: ${member.created_at || '-'}<br>
         Diperbarui: ${member.updated_at || '-'}
@@ -88,12 +90,17 @@ function renderMembers() {
   });
 }
 
-// Dropdown Orang Tua
-function updateParentDropdowns() {
-  const dropdowns = document.querySelectorAll('.parent-dropdown');
+// Dropdown Pilihan Anggota untuk Orang Tua & Pasangan
+function updateMemberDropdowns() {
+  const dropdowns = document.querySelectorAll('.member-dropdown');
   dropdowns.forEach(select => {
     const currentValue = select.value;
-    select.innerHTML = '<option value="-">-- Pilih Orang Tua (Jika ada) --</option>';
+    const isParentDropdown = select.id.includes('parent');
+    
+    select.innerHTML = isParentDropdown 
+      ? '<option value="-">-- Pilih Orang Tua (Jika ada) --</option>' 
+      : '<option value="-">-- Pilih Pasangan (Jika ada) --</option>';
+
     membersData.forEach(m => {
       const opt = document.createElement('option');
       opt.value = m.full_name;
@@ -104,7 +111,35 @@ function updateParentDropdowns() {
   });
 }
 
-// Tambah Data
+// Tambah Kerabat Otomatis dari Kartu
+function quickAddRelative(targetName) {
+  const relType = prompt(
+    `Tambahkan hubungan untuk ${targetName}:\n\n1 = Anak (Sebutkan ${targetName} sebagai Orang Tua)\n2 = Pasangan (Sebutkan ${targetName} sebagai Pasangan)\n\nMasukkan angka (1/2):`
+  );
+
+  if (relType === '1') {
+    resetForm();
+    document.getElementById('parent_name').value = targetName;
+    document.getElementById('formTitle').innerText = `+ Tambah Anak dari ${targetName}`;
+    document.getElementById('btnCancel').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (relType === '2') {
+    resetForm();
+    document.getElementById('spouse_name').value = targetName;
+    document.getElementById('formTitle').innerText = `+ Tambah Pasangan dari ${targetName}`;
+    document.getElementById('btnCancel').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+// Reset Form Tambah Data
+function resetForm() {
+  document.getElementById('addMemberForm').reset();
+  document.getElementById('formTitle').innerText = "+ Tambah Anggota Keluarga";
+  document.getElementById('btnCancel').style.display = 'none';
+}
+
+// Submit Form Tambah Anggota
 document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnSubmit');
@@ -123,25 +158,26 @@ document.getElementById('addMemberForm').addEventListener('submit', async (e) =>
     full_name: document.getElementById('full_name').value,
     gender: document.getElementById('gender').value,
     parent_name: document.getElementById('parent_name').value,
-    birth_year: document.getElementById('birth_year').value,
+    spouse_name: document.getElementById('spouse_name').value,
+    child_order: document.getElementById('child_order').value,
     status: document.getElementById('status').value,
     photo_base64: photoBase64
   };
 
   try {
     await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-    alert("Data & Foto berhasil disimpan ke Drive!");
-    document.getElementById('addMemberForm').reset();
+    alert("Data berhasil disimpan!");
+    resetForm();
     await loadMembers();
   } catch (err) {
-    alert("Gagal menyalurkan data.");
+    alert("Gagal menyimpan data.");
   } finally {
     btn.innerText = "Simpan Data";
     btn.disabled = false;
   }
 });
 
-// Modal Edit
+// Modal Edit (Admin)
 function openEditModal(id) {
   if (!isAdmin) return;
   const member = membersData.find(m => m.id === id);
@@ -150,8 +186,9 @@ function openEditModal(id) {
   document.getElementById('edit_id').value = member.id;
   document.getElementById('edit_full_name').value = member.full_name;
   document.getElementById('edit_gender').value = member.gender;
-  document.getElementById('edit_parent_name').value = member.parent_name;
-  document.getElementById('edit_birth_year').value = member.birth_year;
+  document.getElementById('edit_parent_name').value = member.parent_name || '-';
+  document.getElementById('edit_spouse_name').value = member.spouse_name || '-';
+  document.getElementById('edit_child_order').value = member.child_order || '';
   document.getElementById('edit_status').value = member.status;
 
   document.getElementById('editModal').style.display = 'flex';
@@ -161,7 +198,7 @@ function closeEditModal() {
   document.getElementById('editModal').style.display = 'none';
 }
 
-// Submit Edit
+// Submit Edit Data
 document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnEditSubmit');
@@ -179,10 +216,11 @@ document.getElementById('editMemberForm').addEventListener('submit', async (e) =
     action: "edit",
     id: document.getElementById('edit_id').value,
     full_name: document.getElementById('edit_full_name').value,
-    gender: document.getElementById('gender').value,
-    parent_name: document.getElementById('parent_name').value,
-    birth_year: document.getElementById('birth_year').value,
-    status: document.getElementById('status').value,
+    gender: document.getElementById('edit_gender').value,
+    parent_name: document.getElementById('edit_parent_name').value,
+    spouse_name: document.getElementById('edit_spouse_name').value,
+    child_order: document.getElementById('edit_child_order').value,
+    status: document.getElementById('edit_status').value,
     photo_base64: photoBase64
   };
 
@@ -202,7 +240,6 @@ document.getElementById('editMemberForm').addEventListener('submit', async (e) =
 // Hapus Data
 async function deleteMember(id) {
   if (!isAdmin) return;
-
   if (!confirm("Apakah Anda yakin ingin menghapus data anggota keluarga ini?")) return;
 
   try {
@@ -217,5 +254,5 @@ async function deleteMember(id) {
   }
 }
 
-// Load data saat pertama kali dibuka
+// Inisialisasi
 loadMembers();

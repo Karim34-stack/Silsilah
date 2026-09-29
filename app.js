@@ -139,18 +139,31 @@ function resetForm() {
   document.getElementById('btnCancel').style.display = 'none';
 }
 
-// Submit Form Tambah Anggota
+// Submit Form Tambah Anggota (Optimized & Fast)
 document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnSubmit');
-  btn.innerText = "Mengunggah Foto & Menyimpan...";
-  btn.disabled = true;
-
+  
   const photoFileInput = document.getElementById('photo_file');
   let photoBase64 = "";
 
+  // Jika ada foto, cek ukuran dan konversi
   if (photoFileInput.files.length > 0) {
-    photoBase64 = await toBase64(photoFileInput.files[0]);
+    btn.innerText = "Mengunggah Foto...";
+    btn.disabled = true;
+    
+    const file = photoFileInput.files[0];
+    // Batasi ukuran file maksimal 2MB agar proses tidak terlalu lama
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Ukuran foto terlalu besar! Maksimal 2MB.");
+      btn.innerText = "Simpan Data";
+      btn.disabled = false;
+      return;
+    }
+    photoBase64 = await toBase64(file);
+  } else {
+    btn.innerText = "Menyimpan Data...";
+    btn.disabled = true;
   }
 
   const payload = {
@@ -165,12 +178,21 @@ document.getElementById('addMemberForm').addEventListener('submit', async (e) =>
   };
 
   try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-    alert("Data berhasil disimpan!");
-    resetForm();
-    await loadMembers();
+    const response = await fetch(SCRIPT_URL, { 
+      method: 'POST', 
+      body: JSON.stringify(payload) 
+    });
+    
+    if (response.ok) {
+      alert("Data berhasil disimpan!");
+      resetForm();
+      await loadMembers();
+    } else {
+      alert("Terjadi respons gagal dari server.");
+    }
   } catch (err) {
-    alert("Gagal menyimpan data.");
+    console.error("Error submit:", err);
+    alert("Gagal menyimpan data. Pastikan koneksi internet stabil.");
   } finally {
     btn.innerText = "Simpan Data";
     btn.disabled = false;

@@ -96,24 +96,30 @@ body.admin-mode .status-badge {
 /* ====================================
    LAYOUT POHON SILSILAH FLEXBOX DENGAN GARIS
    ==================================== */
+.card.tree-card {
+  overflow-x: auto; /* Memastikan scrollbar horizontal aktif di kartu */
+  padding: 20px;
+}
+
 .tree-wrapper {
   width: 100%;
-  overflow-x: auto;
+  display: block; /* Ubah dari flex ke block agar scrollbar bekerja normal */
+  text-align: center; /* Meratakan isi pohon ke tengah secara aman */
   padding: 20px 0;
-  display: flex;
-  justify-content: center;
 }
 
 .tree {
-  display: flex;
-  justify-content: center;
+  display: inline-block; /* Mengikuti lebar konten pohon tanpa memotong sisi kiri */
+  min-width: 100%;
+  text-align: center;
 }
 
 .tree ul {
   padding-top: 24px; 
   position: relative;
-  display: flex;
+  display: inline-flex; /* Memastikan node sejajar dan sejajar dengan batas scroll */
   justify-content: center;
+  margin: 0 auto;
 }
 
 .tree li {

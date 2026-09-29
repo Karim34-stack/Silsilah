@@ -8,11 +8,12 @@
 body {
   background-color: #0f172a;
   color: #f8fafc;
+  min-height: 100vh;
 }
 
+/* Header */
 header {
   background-color: #1e293b;
-  color: #ffffff;
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
@@ -20,12 +21,39 @@ header {
   border-bottom: 1px solid #334155;
 }
 
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+header h1 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.btn-primary-header {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary-header:hover {
+  background-color: #059669;
+}
+
 .status-badge {
   background-color: #ef4444;
   padding: 5px 12px;
   border-radius: 20px;
-  font-size: 0.85rem;
-  margin-right: 10px;
+  font-size: 0.8rem;
 }
 
 body.admin-mode .status-badge {
@@ -42,10 +70,10 @@ body.admin-mode .status-badge {
   font-size: 0.85rem;
 }
 
+/* Main Layout */
 .main-layout {
   padding: 20px;
-  max-width: 1800px;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 .card {
@@ -54,82 +82,31 @@ body.admin-mode .status-badge {
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   border: 1px solid #334155;
+  min-height: 80vh;
 }
 
-.tree-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #334155;
-  padding-bottom: 12px;
-  margin-bottom: 15px;
-}
-
-.tree-header h2 {
-  font-size: 1.2rem;
-  color: #f8fafc;
-}
-
-.btn-primary {
-  background-color: #10b981;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  background-color: #059669;
-}
-
-.form-group {
-  margin-bottom: 14px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 500;
-  margin-bottom: 5px;
+.loading-text {
+  display: none;
   color: #94a3b8;
-}
-
-.form-group input, 
-.form-group select {
-  width: 100%;
-  padding: 9px 12px;
-  background-color: #0f172a;
-  border: 1px solid #334155;
-  color: #f8fafc;
-  border-radius: 6px;
-  font-size: 0.85rem;
-}
-
-.btn-submit {
-  width: 100%;
-  padding: 11px;
-  background-color: #10b981;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.btn-submit:hover {
-  background-color: #059669;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
 }
 
 /* ====================================
-   DESAIN POHON SILSILAH DARK THEME
+   LAYOUT POHON SILSILAH FLEXBOX DENGAN GARIS
    ==================================== */
 .tree-wrapper {
   width: 100%;
   overflow-x: auto;
-  padding: 30px 10px;
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.tree {
+  display: flex;
+  justify-content: center;
 }
 
 .tree ul {
@@ -140,14 +117,15 @@ body.admin-mode .status-badge {
 }
 
 .tree li {
-  float: left; 
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   list-style-type: none;
   position: relative;
   padding: 24px 12px 0 12px;
 }
 
-/* Garis-garis cabang */
+/* Garis-garis cabang horizontal & vertikal */
 .tree li::before, .tree li::after {
   content: '';
   position: absolute; 
@@ -195,7 +173,7 @@ body.admin-mode .status-badge {
   height: 24px;
 }
 
-/* Kontainer Pasangan (Couple Box) */
+/* Kontainer Pasangan */
 .couple-wrapper {
   display: inline-flex;
   align-items: center;
@@ -205,6 +183,7 @@ body.admin-mode .status-badge {
   padding: 8px;
   border-radius: 12px;
   position: relative;
+  z-index: 2;
 }
 
 .heart-icon {
@@ -223,13 +202,8 @@ body.admin-mode .status-badge {
   text-align: center;
 }
 
-.member-node.female {
-  border-color: #ec4899;
-}
-
-.member-node.male {
-  border-color: #3b82f6;
-}
+.member-node.female { border-color: #ec4899; }
+.member-node.male { border-color: #3b82f6; }
 
 .node-header {
   display: flex;
@@ -247,9 +221,7 @@ body.admin-mode .status-badge {
   flex-shrink: 0;
 }
 
-.female .node-avatar {
-  border-color: #ec4899;
-}
+.female .node-avatar { border-color: #ec4899; }
 
 .node-info {
   text-align: left;
@@ -302,18 +274,10 @@ body.admin-mode .status-badge {
   cursor: pointer;
 }
 
-.btn-link:hover {
-  color: #f8fafc;
-}
+.btn-link:hover { color: #f8fafc; }
+.btn-link.add-btn { color: #34d399; font-weight: 600; }
 
-.btn-link.add-btn {
-  color: #34d399;
-  font-weight: 600;
-}
-
-/* ====================================
-   DROPDOWN MENU + KERABAT
-   ==================================== */
+/* Dropdown Menu */
 .relative-dropdown {
   position: relative;
   display: inline-block;
@@ -334,9 +298,7 @@ body.admin-mode .status-badge {
   margin-bottom: 5px;
 }
 
-.dropdown-menu.show {
-  display: block;
-}
+.dropdown-menu.show { display: block; }
 
 .dropdown-item {
   display: flex;
@@ -357,7 +319,7 @@ body.admin-mode .status-badge {
   color: #34d399;
 }
 
-/* Modal */
+/* Modal Form */
 .modal {
   display: none;
   position: fixed;
@@ -388,17 +350,45 @@ body.admin-mode .status-badge {
   color: #94a3b8;
 }
 
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: #94a3b8;
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 9px 12px;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 11px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
 .admin-action-btns {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 4px; right: 4px;
   display: none;
   gap: 2px;
 }
 
-body.admin-mode .admin-action-btns {
-  display: flex;
-}
+body.admin-mode .admin-action-btns { display: flex; }
 
 .btn-admin {
   padding: 1px 4px;

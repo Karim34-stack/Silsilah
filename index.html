@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Silsilah Keluarga Interaktif</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>🌳 Silsilah Keluarga</h1>
+    <div>
+      <span id="role-status" class="status-badge">Mode: Member (Tambah Saja)</span>
+      <button class="admin-toggle" onclick="toggleAdmin()">Switch Mode Admin</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Form Tambah Anggota -->
+    <div class="card">
+      <h2>+ Tambah Anggota Keluarga</h2>
+      <form id="addMemberForm">
+        <div class="form-group">
+          <label>Nama Lengkap</label>
+          <input type="text" id="full_name" required placeholder="Contoh: Budi Santoso">
+        </div>
+
+        <div class="form-group">
+          <label>Foto Profil (Tersimpan di Drive)</label>
+          <input type="file" id="photo_file" accept="image/*">
+        </div>
+
+        <div class="form-group">
+          <label>Jenis Kelamin</label>
+          <select id="gender" required>
+            <option value="Laki-laki">Laki-laki</option>
+            <option value="Perempuan">Perempuan</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Orang Tua / Ayah / Ibu</label>
+          <select id="parent_name" class="parent-dropdown">
+            <option value="-">-- Pilih Orang Tua (Jika ada) --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tahun Lahir</label>
+          <input type="number" id="birth_year" required placeholder="Contoh: 1985">
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select id="status" required>
+            <option value="Masih Hidup">Masih Hidup</option>
+            <option value="Almarhum / Almarhumah">Almarhum / Almarhumah</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnSubmit">Simpan Data</button>
+      </form>
+    </div>
+
+    <!-- Daftar Anggota Keluarga -->
+    <div class="card">
+      <h2>Daftar Anggota Keluarga</h2>
+      <div id="loading" style="display:none; color: #888; font-style: italic;">Memuat data dari Google Sheets...</div>
+      <div class="member-grid" id="memberGrid"></div>
+    </div>
+  </div>
+
+  <!-- Modal Edit Data -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeEditModal()">&times;</span>
+      <h2>Edit Data Anggota</h2>
+      <form id="editMemberForm">
+        <input type="hidden" id="edit_id">
+        <div class="form-group">
+          <label>Nama Lengkap</label>
+          <input type="text" id="edit_full_name" required>
+        </div>
+
+        <div class="form-group">
+          <label>Ganti Foto (Opsional)</label>
+          <input type="file" id="edit_photo_file" accept="image/*">
+        </div>
+
+        <div class="form-group">
+          <label>Jenis Kelamin</label>
+          <select id="edit_gender" required>
+            <option value="Laki-laki">Laki-laki</option>
+            <option value="Perempuan">Perempuan</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Orang Tua / Ayah / Ibu</label>
+          <select id="edit_parent_name" class="parent-dropdown">
+            <option value="-">-- Pilih Orang Tua (Jika ada) --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tahun Lahir</label>
+          <input type="number" id="edit_birth_year" required>
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select id="edit_status" required>
+            <option value="Masih Hidup">Masih Hidup</option>
+            <option value="Almarhum / Almarhumah">Almarhum / Almarhumah</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnEditSubmit">Update Data</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Script JS Eksternal -->
+  <script src="app.js"></script>
+</body>
+</html>

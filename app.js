@@ -397,5 +397,44 @@ function updateMemberDropdowns() {
   });
 }
 
+function handleFormSubmit(event) {
+  event.preventDefault();
+
+  // 1. Buat objek data anggota keluarga baru
+  const newMember = {
+    id: Date.now().toString(), // atau ID unik lainnya
+    nama: document.getElementById('namaInput').value.trim(),
+    jenisKelamin: document.getElementById('genderSelect').value,
+    orangTuaId: document.getElementById('parentSelect').value || null,
+    pasanganId: document.getElementById('spouseSelect').value || null,
+    anakKe: document.getElementById('anakKeInput').value || null,
+    status: document.getElementById('statusSelect').value
+  };
+
+  // 2. Simpan anggota baru ke dalam array/database
+  familyData.push(newMember);
+
+  // 3. ⚠️ KUNCI PERBAIKAN: Update data pasangan secara dua arah (Two-way update)
+  if (newMember.pasanganId) {
+    // Cari data target pasangan (misal: RUBIKEM) berdasarkan ID
+    const spousePerson = familyData.find(person => person.id === newMember.pasanganId);
+    
+    if (spousePerson) {
+      // Update field pasangan milik RUBIKEM secara otomatis dengan nama/ID anggota baru
+      spousePerson.pasanganId = newMember.id;
+      
+      // Jika penyimpanan menggunakan field nama langsung:
+      // spousePerson.pasangan = newMember.nama;
+    }
+  }
+
+  // 4. Simpan ke LocalStorage / Database Backend (jika ada)
+  saveFamilyDataToStorage();
+
+  // 5. Render ulang pohon silsilah & tutup modal
+  renderTree();
+  closeModal();
+}
+
 // Inisialisasi
 loadMembers();

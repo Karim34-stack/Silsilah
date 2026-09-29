@@ -1,6 +1,7 @@
 // ⚠️ MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxK_oVv7EJj3C1rY4IlO5TWxp-N7-NCiRD6CCc27jBbline6DAwjKh2Yc4I5DSnOFT7PQ/exec";
 
+
 let isAdmin = false;
 let membersData = [];
 
@@ -31,7 +32,7 @@ function toggleAdmin() {
   document.body.classList.toggle('admin-mode', isAdmin);
 }
 
-// Load Data
+// Load Data dari Web App Apps Script
 async function loadMembers() {
   const loadingEl = document.getElementById('loading');
   if (loadingEl) loadingEl.style.display = 'block';
@@ -57,14 +58,13 @@ async function loadMembers() {
   }
 }
 
-// Menutup semua dropdown jika klik di luar
+// Menutup dropdown jika diklik di luar area
 window.addEventListener('click', function(e) {
   if (!e.target.matches('.add-btn')) {
     document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
   }
 });
 
-// Toggle Menu Dropdown + Kerabat
 function toggleDropdown(id) {
   document.querySelectorAll('.dropdown-menu').forEach(menu => {
     if (menu.id !== `dropdown-${id}`) menu.classList.remove('show');
@@ -73,7 +73,7 @@ function toggleDropdown(id) {
   if (currentMenu) currentMenu.classList.toggle('show');
 }
 
-// Function Membuat HTML Node Individu
+// Fungsi Membuat HTML Kartu Individu
 function createNodeHTML(member) {
   const isFemale = member.gender === 'Perempuan';
   const defaultAvatar = isFemale 
@@ -120,22 +120,24 @@ function createNodeHTML(member) {
   `;
 }
 
-// Render Pohon Silsilah Utama
+// Render Pohon Utama
 function renderTree() {
   const container = document.getElementById('treeContainer');
   container.innerHTML = '';
 
   if (!membersData || membersData.length === 0) {
-    container.innerHTML = '<p style="color:#94a3b8;">Belum ada data anggota keluarga.</p>';
+    container.innerHTML = '<p style="color:#94a3b8; padding: 20px;">Belum ada data anggota keluarga.</p>';
     return;
   }
 
   const processedSet = new Set();
 
+  // Cari Leluhur
   const roots = membersData.filter(m => {
     return !m.parent_name || m.parent_name === '-' || !membersData.some(p => p.full_name === m.parent_name);
   });
 
+  // Urutkan Leluhur: Tua di KANAN, Muda di KIRI
   roots.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   const ul = document.createElement('ul');
@@ -155,7 +157,7 @@ function renderTree() {
   container.appendChild(ul);
 }
 
-// Rekursif Pohon Silsilah
+// Rekursif Membuat Node Pohon
 function buildTreeNode(member, processedSet) {
   processedSet.add(member.full_name);
 
@@ -195,7 +197,7 @@ function buildTreeNode(member, processedSet) {
   return li;
 }
 
-// Buka Modal Tambah Kerabat secara Spesifik
+// Buka Modal Tambah Kerabat Spesifik
 function openAddRelativeModal(targetName, relType) {
   openMemberModal('add');
   
@@ -210,7 +212,7 @@ function openAddRelativeModal(targetName, relType) {
   }
 }
 
-// Buka Modal Tambah / Edit Anggota
+// Buka Modal Form Utama
 function openMemberModal(mode, id = null) {
   document.getElementById('memberForm').reset();
   document.getElementById('form_action').value = mode;
@@ -353,5 +355,5 @@ function updateMemberDropdowns() {
   });
 }
 
-// Load data awal
+// Inisialisasi
 loadMembers();

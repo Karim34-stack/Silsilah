@@ -1,6 +1,7 @@
 // ⚠️ MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxK_oVv7EJj3C1rY4IlO5TWxp-N7-NCiRD6CCc27jBbline6DAwjKh2Yc4I5DSnOFT7PQ/exec";
 
+
 let isAdmin = false;
 let membersData = [];
 
@@ -47,7 +48,7 @@ async function loadMembers() {
   }
 }
 
-// Function Pembantu Membuat HTML Kartu Anggota
+// Function Pembantu Membuat HTML Kartu Anggota Ringkas
 function createCardHTML(member, isSpouse = false) {
   const isFemale = member.gender === 'Perempuan';
   const defaultAvatar = isFemale 
@@ -65,10 +66,7 @@ function createCardHTML(member, isSpouse = false) {
       <img src="${photoSrc}" class="profile-img" alt="${member.full_name}" onerror="this.src='${defaultAvatar}'">
       <h3>${member.full_name}</h3>
       <p><strong>Kelamin:</strong> ${member.gender}</p>
-      ${member.parent_name && member.parent_name !== '-' ? `<p><strong>Anak Dari:</strong> ${member.parent_name}</p>` : ''}
-      ${member.spouse_name && member.spouse_name !== '-' ? `<p><strong>Pasangan:</strong> ${member.spouse_name}</p>` : ''}
-      <p><strong>Anak Ke-:</strong> ${member.child_order || '-'}</p>
-      <span class="badge">${member.status}</span>
+      <p><strong>Orang Tua:</strong> ${member.parent_name && member.parent_name !== '-' ? member.parent_name : '-'}</p>
       <button class="btn-add-relative" onclick="quickAddRelative('${member.full_name}')">+ Tambah Kerabat</button>
     </div>
   `;
@@ -88,6 +86,9 @@ function renderTree() {
   const roots = membersData.filter(m => {
     return !m.parent_name || m.parent_name === '-' || !membersData.some(p => p.full_name === m.parent_name);
   });
+
+  // Urutkan leluhur: Anak/generasi paling tua di KANAN, muda di KIRI
+  roots.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   const ul = document.createElement('ul');
 
@@ -122,8 +123,8 @@ function buildTreeNode(member) {
     return m.parent_name === member.full_name || (member.spouse_name && m.parent_name === member.spouse_name);
   });
 
-  // Urutkan anak berdasarkan 'child_order'
-  children.sort((a, b) => (parseInt(a.child_order) || 99) - (parseInt(b.child_order) || 99));
+  // ATURAN URUTAN: Anak Paling Tua (Anak ke-1) di KANAN, Muda di KIRI (Descending Order)
+  children.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   if (children.length > 0) {
     const childrenUl = document.createElement('ul');

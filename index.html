@@ -8,27 +8,27 @@
 </head>
 <body>
 
+  <!-- Header Utama -->
   <header>
-    <h1>🌳 Silsilah Keluarga</h1>
-    <div>
+    <div class="header-left">
+      <h1>🌳 Silsilah Keluarga</h1>
+      <button class="btn-primary-header" onclick="openMemberModal('add')">+ Tambah Anggota</button>
+    </div>
+    <div class="header-right">
       <span id="role-status" class="status-badge">Mode: Member (Tambah Saja)</span>
       <button class="admin-toggle" onclick="toggleAdmin()">Switch Mode Admin</button>
     </div>
   </header>
 
-  <div class="main-layout">
-    <!-- Tampilan Pohon Silsilah Utama -->
+  <!-- Area Utama Pohon Silsilah -->
+  <main class="main-layout">
     <div class="card tree-card">
-      <div class="tree-header">
-        <h2>Pohon Silsilah Keluarga</h2>
-        <button class="btn-primary" onclick="openMemberModal('add')">+ Tambah Anggota Utama</button>
-      </div>
-      <div id="loading" style="display:none; color: #94a3b8; font-style: italic; text-align: center; margin: 20px 0;">Memuat data dari Google Sheets...</div>
-      <div class="tree-wrapper" id="treeWrapper">
+      <div id="loading" class="loading-text">Memuat data dari Google Sheets...</div>
+      <div class="tree-wrapper">
         <div class="tree" id="treeContainer"></div>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- Modal Form Tambah / Edit Kerabat -->
   <div class="modal" id="memberModal">

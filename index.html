@@ -3,54 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="dark">
   <title>Silsilah Keluarga Interaktif</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Header Utama -->
   <header>
     <div class="header-left">
       <h1>🌳 Silsilah Keluarga</h1>
-      <button type="button" class="btn-primary-header" onclick="openMemberModal('add')">+ Tambah Anggota</button>
+      <button class="btn-primary-header" onclick="openMemberModal('add')">+ Tambah Anggota</button>
     </div>
     <div class="header-right">
       <span id="role-status" class="status-badge">Mode: Member (Tambah Saja)</span>
-      <button type="button" class="admin-toggle" onclick="toggleAdmin()">Switch Mode Admin</button>
+      <button class="admin-toggle" onclick="toggleAdmin()">Switch Mode Admin</button>
     </div>
   </header>
 
+  <!-- Pencarian Silsilah -->
+  <section class="search-panel">
+    <div class="search-title">🔎 Cari Silsilah</div>
+    <div class="search-controls">
+      <div class="search-field search-name-field">
+        <label for="searchName">Cari nama</label>
+        <input id="searchName" type="search" placeholder="Ketik nama anggota..." autocomplete="off">
+      </div>
+      <div class="search-field">
+        <label for="searchGeneration">Pilih generasi</label>
+        <select id="searchGeneration">
+          <option value="">-- Semua Generasi --</option>
+        </select>
+      </div>
+      <button type="button" class="btn-search" id="btnSearch">🔎 Cari</button>
+      <button type="button" class="btn-clear-search" id="btnClearSearch">↺ Reset</button>
+    </div>
+    <div id="searchHint" class="search-hint">Cari nama untuk melihat anggota tersebut beserta anak dan cucunya, atau pilih generasi untuk menampilkan semua anggotanya.</div>
+  </section>
+
+  <!-- Hasil Pencarian -->
+  <section id="searchResultsPanel" class="search-results-panel" hidden>
+    <div class="search-results-head">
+      <h2 id="searchResultsTitle">Hasil Pencarian</h2>
+      <span id="searchResultsCount" class="results-count"></span>
+    </div>
+    <div id="searchResults" class="search-results"></div>
+  </section>
+
+  <!-- Area Utama Pohon Silsilah -->
   <main class="main-layout">
     <div class="card tree-card">
       <div id="loading" class="loading-text">Memuat data dari Google Sheets...</div>
-      <div id="errorBox" class="error-box" hidden></div>
       <div class="tree-wrapper">
         <div class="tree" id="treeContainer"></div>
       </div>
     </div>
   </main>
 
-  <div class="modal" id="memberModal" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button type="button" class="close-btn" onclick="closeMemberModal()" aria-label="Tutup">&times;</button>
+  <!-- Modal Form Tambah / Edit Kerabat -->
+  <div class="modal" id="memberModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeMemberModal()">&times;</span>
       <h2 id="modalTitle">+ Tambah Anggota Keluarga</h2>
-
+      
       <form id="memberForm">
         <input type="hidden" id="form_id">
         <input type="hidden" id="form_action" value="add">
 
         <div class="form-group">
-          <label for="full_name">Nama Lengkap</label>
-          <input type="text" id="full_name" required placeholder="Contoh: Budi Santoso" autocomplete="name">
+          <label>Nama Lengkap</label>
+          <input type="text" id="full_name" required placeholder="Contoh: Budi Santoso">
         </div>
 
         <div class="form-group">
-          <label for="photo_file">Foto Profil (Tersimpan di Drive)</label>
+          <label>Foto Profil (Tersimpan di Drive)</label>
           <input type="file" id="photo_file" accept="image/*">
-          <small class="form-help">Maksimal 2 MB. Foto lama tetap dipakai jika saat edit tidak memilih foto baru.</small>
         </div>
 
         <div class="form-group">
-          <label for="gender">Jenis Kelamin</label>
+          <label>Jenis Kelamin</label>
           <select id="gender" required>
             <option value="Laki-laki">Laki-laki</option>
             <option value="Perempuan">Perempuan</option>
@@ -58,26 +88,26 @@
         </div>
 
         <div class="form-group">
-          <label for="parent_name">Orang Tua / Ayah / Ibu</label>
+          <label>Orang Tua / Ayah / Ibu</label>
           <select id="parent_name" class="member-dropdown">
             <option value="-">-- Pilih Orang Tua (Jika ada) --</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="spouse_name">Nama Pasangan (Suami/Istri)</label>
+          <label>Nama Pasangan (Suami/Istri)</label>
           <select id="spouse_name" class="member-dropdown">
             <option value="-">-- Pilih Pasangan (Jika ada) --</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="child_order">Anak Ke-</label>
-          <input type="number" id="child_order" min="1" step="1" required placeholder="Contoh: 1">
+          <label>Anak Ke-</label>
+          <input type="number" id="child_order" min="1" required placeholder="Contoh: 1">
         </div>
 
         <div class="form-group">
-          <label for="status">Status</label>
+          <label>Status</label>
           <select id="status" required>
             <option value="Masih Hidup">Masih Hidup</option>
             <option value="Almarhum / Almarhumah">Almarhum / Almarhumah</option>
@@ -86,14 +116,6 @@
 
         <button type="submit" class="btn-submit" id="btnSubmit">Simpan Data</button>
       </form>
-    </div>
-  </div>
-
-  <div class="modal" id="imageModal" aria-hidden="true" onclick="closeImageModal(event)">
-    <div class="image-modal-content">
-      <button type="button" class="close-btn image-close" onclick="closeImageModal(event)" aria-label="Tutup">&times;</button>
-      <img id="largeImage" src="" alt="Foto anggota keluarga">
-      <div id="largeImageCaption"></div>
     </div>
   </div>
 

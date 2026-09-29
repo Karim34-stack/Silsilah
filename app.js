@@ -37,7 +37,7 @@ async function loadMembers() {
   try {
     const res = await fetch(SCRIPT_URL);
     membersData = await res.json();
-    renderMembers();
+    renderTree();
     updateMemberDropdowns();
   } catch (err) {
     console.error("Gagal mengambil data:", err);
@@ -47,28 +47,17 @@ async function loadMembers() {
   }
 }
 
-// Render Kartu Anggota
-function renderMembers() {
-  const grid = document.getElementById('memberGrid');
-  grid.innerHTML = '';
+// Function Pembantu Membuat HTML Kartu Anggota
+function createCardHTML(member, isSpouse = false) {
+  const isFemale = member.gender === 'Perempuan';
+  const defaultAvatar = isFemale 
+    ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' 
+    : 'https://cdn-icons-png.flaticon.com/512/4140/4140037.png';
 
-  if (membersData.length === 0) {
-    grid.innerHTML = '<p style="color:#777;">Belum ada data anggota keluarga.</p>';
-    return;
-  }
+  const photoSrc = member.photo_url || defaultAvatar;
 
-  membersData.forEach(member => {
-    const isFemale = member.gender === 'Perempuan';
-    const card = document.createElement('div');
-    card.className = `member-card ${isFemale ? 'female' : ''}`;
-    
-    const defaultAvatar = isFemale 
-      ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' 
-      : 'https://cdn-icons-png.flaticon.com/512/4140/4140037.png';
-
-    const photoSrc = member.photo_url || defaultAvatar;
-
-    card.innerHTML = `
+  return `
+    <div class="member-card ${isFemale ? 'female' : ''} ${isSpouse ? 'spouse-card' : ''}">
       <div class="action-btns">
         <button class="btn-action btn-edit" onclick="openEditModal('${member.id}')">Edit</button>
         <button class="btn-action btn-delete" onclick="deleteMember('${member.id}')">Hapus</button>
@@ -76,21 +65,78 @@ function renderMembers() {
       <img src="${photoSrc}" class="profile-img" alt="${member.full_name}" onerror="this.src='${defaultAvatar}'">
       <h3>${member.full_name}</h3>
       <p><strong>Kelamin:</strong> ${member.gender}</p>
-      <p><strong>Orang Tua:</strong> ${member.parent_name || '-'}</p>
-      <p><strong>Pasangan:</strong> ${member.spouse_name || '-'}</p>
+      ${member.parent_name && member.parent_name !== '-' ? `<p><strong>Anak Dari:</strong> ${member.parent_name}</p>` : ''}
+      ${member.spouse_name && member.spouse_name !== '-' ? `<p><strong>Pasangan:</strong> ${member.spouse_name}</p>` : ''}
       <p><strong>Anak Ke-:</strong> ${member.child_order || '-'}</p>
       <span class="badge">${member.status}</span>
       <button class="btn-add-relative" onclick="quickAddRelative('${member.full_name}')">+ Tambah Kerabat</button>
-      <div class="timestamp">
-        Dibuat: ${member.created_at || '-'}<br>
-        Diperbarui: ${member.updated_at || '-'}
-      </div>
-    `;
-    grid.appendChild(card);
-  });
+    </div>
+  `;
 }
 
-// Dropdown Pilihan Anggota untuk Orang Tua & Pasangan
+// Render Silsilah Pohon Bergaris secara Rekursif
+function renderTree() {
+  const container = document.getElementById('treeContainer');
+  container.innerHTML = '';
+
+  if (membersData.length === 0) {
+    container.innerHTML = '<p style="color:#777;">Belum ada data anggota keluarga.</p>';
+    return;
+  }
+
+  // Cari anggota leluhur/paling atas (orang tua yang tidak punya orang tua terdaftar)
+  const roots = membersData.filter(m => {
+    return !m.parent_name || m.parent_name === '-' || !membersData.some(p => p.full_name === m.parent_name);
+  });
+
+  const ul = document.createElement('ul');
+
+  roots.forEach(root => {
+    ul.appendChild(buildTreeNode(root));
+  });
+
+  container.appendChild(ul);
+}
+
+// Fungsi Rekursif Membuat Node Pohon
+function buildTreeNode(member) {
+  const li = document.createElement('li');
+  const cardContainer = document.createElement('div');
+  cardContainer.className = 'member-card-container';
+
+  // Kartu Utama
+  cardContainer.innerHTML = createCardHTML(member);
+
+  // Jika punya pasangan yang terdaftar di database, tampilkan bersebelahan
+  if (member.spouse_name && member.spouse_name !== '-') {
+    const spouseObj = membersData.find(m => m.full_name === member.spouse_name);
+    if (spouseObj) {
+      cardContainer.innerHTML += createCardHTML(spouseObj, true);
+    }
+  }
+
+  li.appendChild(cardContainer);
+
+  // Cari anak-anak dari anggota ini (atau dari pasangannya)
+  const children = membersData.filter(m => {
+    return m.parent_name === member.full_name || (member.spouse_name && m.parent_name === member.spouse_name);
+  });
+
+  // Urutkan anak berdasarkan 'child_order'
+  children.sort((a, b) => (parseInt(a.child_order) || 99) - (parseInt(b.child_order) || 99));
+
+  if (children.length > 0) {
+    const childrenUl = document.createElement('ul');
+    children.forEach(child => {
+      childrenUl.appendChild(buildTreeNode(child));
+    });
+    li.appendChild(childrenUl);
+  }
+
+  return li;
+}
+
+// Dropdown Pilihan Anggota
 function updateMemberDropdowns() {
   const dropdowns = document.querySelectorAll('.member-dropdown');
   dropdowns.forEach(select => {
@@ -111,7 +157,7 @@ function updateMemberDropdowns() {
   });
 }
 
-// Tambah Kerabat Otomatis dari Kartu
+// Tambah Kerabat Otomatis
 function quickAddRelative(targetName) {
   const relType = prompt(
     `Tambahkan hubungan untuk ${targetName}:\n\n1 = Anak (Sebutkan ${targetName} sebagai Orang Tua)\n2 = Pasangan (Sebutkan ${targetName} sebagai Pasangan)\n\nMasukkan angka (1/2):`
@@ -139,7 +185,7 @@ function resetForm() {
   document.getElementById('btnCancel').style.display = 'none';
 }
 
-// Submit Form Tambah Anggota (Optimized & Fast)
+// Submit Form Tambah
 document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnSubmit');
@@ -147,13 +193,11 @@ document.getElementById('addMemberForm').addEventListener('submit', async (e) =>
   const photoFileInput = document.getElementById('photo_file');
   let photoBase64 = "";
 
-  // Jika ada foto, cek ukuran dan konversi
   if (photoFileInput.files.length > 0) {
     btn.innerText = "Mengunggah Foto...";
     btn.disabled = true;
     
     const file = photoFileInput.files[0];
-    // Batasi ukuran file maksimal 2MB agar proses tidak terlalu lama
     if (file.size > 2 * 1024 * 1024) {
       alert("Ukuran foto terlalu besar! Maksimal 2MB.");
       btn.innerText = "Simpan Data";
@@ -188,11 +232,11 @@ document.getElementById('addMemberForm').addEventListener('submit', async (e) =>
       resetForm();
       await loadMembers();
     } else {
-      alert("Terjadi respons gagal dari server.");
+      alert("Terjadi kesalahan dari server.");
     }
   } catch (err) {
     console.error("Error submit:", err);
-    alert("Gagal menyimpan data. Pastikan koneksi internet stabil.");
+    alert("Gagal menyimpan data.");
   } finally {
     btn.innerText = "Simpan Data";
     btn.disabled = false;
@@ -220,7 +264,7 @@ function closeEditModal() {
   document.getElementById('editModal').style.display = 'none';
 }
 
-// Submit Edit Data
+// Submit Edit
 document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnEditSubmit');
@@ -276,5 +320,5 @@ async function deleteMember(id) {
   }
 }
 
-// Inisialisasi
+// Load data awal
 loadMembers();

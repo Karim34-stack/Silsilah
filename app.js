@@ -36,13 +36,22 @@ function toggleAdmin() {
 async function loadMembers() {
   document.getElementById('loading').style.display = 'block';
   try {
-    const res = await fetch(SCRIPT_URL);
+    // Tambahkan redirect: 'follow' agar browser mengikuti redirect dari Google Apps Script
+    const res = await fetch(SCRIPT_URL, {
+      method: 'GET',
+      redirect: 'follow'
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
     membersData = await res.json();
     renderTree();
     updateMemberDropdowns();
   } catch (err) {
     console.error("Gagal mengambil data:", err);
-    alert("Gagal memuat data!");
+    alert("Gagal memuat data! Periksa variabel SCRIPT_URL atau izin Web App di Google Apps Script.");
   } finally {
     document.getElementById('loading').style.display = 'none';
   }

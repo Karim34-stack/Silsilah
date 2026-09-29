@@ -34,26 +34,36 @@ function toggleAdmin() {
 
 // Load Data
 async function loadMembers() {
-  document.getElementById('loading').style.display = 'block';
+  const loadingEl = document.getElementById('loading');
+  if (loadingEl) loadingEl.style.display = 'block';
+
   try {
-    // Tambahkan redirect: 'follow' agar browser mengikuti redirect dari Google Apps Script
     const res = await fetch(SCRIPT_URL, {
       method: 'GET',
       redirect: 'follow'
     });
 
     if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+      throw new Error(`HTTP Status Error: ${res.status}`);
     }
 
-    membersData = await res.json();
+    const dataText = await res.text();
+    
+    // Pengecekan jika respon yang kembali berupa JSON valid
+    try {
+      membersData = JSON.parse(dataText);
+    } catch (e) {
+      console.error("Respon bukan JSON valid:", dataText);
+      throw new Error("Respon dari Google Sheets bukan format JSON.");
+    }
+
     renderTree();
     updateMemberDropdowns();
   } catch (err) {
-    console.error("Gagal mengambil data:", err);
-    alert("Gagal memuat data! Periksa variabel SCRIPT_URL atau izin Web App di Google Apps Script.");
+    console.error("Detail Error Fetching:", err);
+    alert("Gagal memuat data! Buka Console browser (F12) untuk melihat detail kesalahan.");
   } finally {
-    document.getElementById('loading').style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'none';
   }
 }
 

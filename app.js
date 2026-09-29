@@ -1,7 +1,6 @@
 // ⚠️ MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxK_oVv7EJj3C1rY4IlO5TWxp-N7-NCiRD6CCc27jBbline6DAwjKh2Yc4I5DSnOFT7PQ/exec";
 
-
 let isAdmin = false;
 let membersData = [];
 
@@ -32,7 +31,7 @@ function toggleAdmin() {
   document.body.classList.toggle('admin-mode', isAdmin);
 }
 
-// Load Data dengan Proteksi Error & Redirect
+// Load Data dari Google Sheets
 async function loadMembers() {
   const loadingEl = document.getElementById('loading');
   if (loadingEl) loadingEl.style.display = 'block';
@@ -43,9 +42,7 @@ async function loadMembers() {
       redirect: 'follow'
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP Status Error: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
     const dataText = await res.text();
     membersData = JSON.parse(dataText);
@@ -53,116 +50,143 @@ async function loadMembers() {
     renderTree();
     updateMemberDropdowns();
   } catch (err) {
-    console.error("Detail Error Fetching:", err);
-    alert("Gagal memuat data! Periksa koneksi atau URL Web App.");
+    console.error("Error Fetching Data:", err);
+    alert("Gagal memuat data silsilah!");
   } finally {
     if (loadingEl) loadingEl.style.display = 'none';
   }
 }
 
-// Function Pembantu Membuat HTML Kartu Anggota Ringkas
-function createCardHTML(member, isSpouse = false) {
+// Fungsi Membuat HTML Node Individu
+function createNodeHTML(member) {
   const isFemale = member.gender === 'Perempuan';
   const defaultAvatar = isFemale 
     ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' 
     : 'https://cdn-icons-png.flaticon.com/512/4140/4140037.png';
 
   const photoSrc = member.photo_url || defaultAvatar;
+  const isAlive = member.status === 'Masih Hidup';
 
   return `
-    <div class="member-card ${isFemale ? 'female' : ''} ${isSpouse ? 'spouse-card' : ''}">
-      <div class="action-btns">
-        <button class="btn-action btn-edit" onclick="openEditModal('${member.id}')">Edit</button>
-        <button class="btn-action btn-delete" onclick="deleteMember('${member.id}')">Hapus</button>
+    <div class="member-node ${isFemale ? 'female' : 'male'}">
+      <div class="admin-action-btns">
+        <button class="btn-admin edit" onclick="openEditModal('${member.id}')">✏️</button>
+        <button class="btn-admin del" onclick="deleteMember('${member.id}')">🗑️</button>
       </div>
-      <img src="${photoSrc}" class="profile-img" alt="${member.full_name}" onerror="this.src='${defaultAvatar}'">
-      <h3>${member.full_name}</h3>
-      <p><strong>Kelamin:</strong> ${member.gender}</p>
-      <p><strong>Orang Tua:</strong> ${member.parent_name && member.parent_name !== '-' ? member.parent_name : '-'}</p>
-      <button class="btn-add-relative" onclick="quickAddRelative('${member.full_name}')">+ Tambah Kerabat</button>
+      <div class="node-header">
+        <img src="${photoSrc}" class="node-avatar" alt="${member.full_name}" onerror="this.src='${defaultAvatar}'">
+        <div class="node-info">
+          <div class="node-name" title="${member.full_name}">${member.full_name}</div>
+          <div class="badges">
+            <span class="badge-tag ${isFemale ? 'bg-female' : 'bg-male'}">${member.gender}</span>
+            <span class="badge-tag ${isAlive ? 'bg-alive' : 'bg-dead'}">${isAlive ? 'Hidup' : 'Wafat'}</span>
+          </div>
+        </div>
+      </div>
+      <div class="node-actions">
+        <button class="btn-link" onclick="showDetail('${member.id}')">Detail Kerabat</button>
+        <button class="btn-link add" onclick="quickAddRelative('${member.full_name}')">+ Kerabat</button>
+      </div>
     </div>
   `;
 }
 
-// Render Silsilah Pohon Bergaris secara Aman dari Infinite Loop
+// Render Pohon Silsilah Utama (Bebas Duplikasi)
 function renderTree() {
   const container = document.getElementById('treeContainer');
   container.innerHTML = '';
 
   if (!membersData || membersData.length === 0) {
-    container.innerHTML = '<p style="color:#777;">Belum ada data anggota keluarga.</p>';
+    container.innerHTML = '<p style="color:#94a3b8;">Belum ada data anggota keluarga.</p>';
     return;
   }
 
-  // Set untuk mencatat ID/Nama anggota yang sudah dirender agar tidak terjadi perulangan tak terbatas
-  const visitedSet = new Set();
+  const processedSet = new Set();
 
-  // Cari anggota leluhur/paling atas (orang tua yang tidak punya orang tua terdaftar)
+  // Cari Leluhur Teratas (Orang tua yang tidak terdaftar sebagai anak dari siapapun)
   const roots = membersData.filter(m => {
     return !m.parent_name || m.parent_name === '-' || !membersData.some(p => p.full_name === m.parent_name);
   });
 
-  // Urutkan leluhur: Anak/generasi paling tua di KANAN, muda di KIRI (Descending Order)
+  // Urutkan Leluhur: Paling Tua di KANAN, Paling Muda di KIRI
   roots.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   const ul = document.createElement('ul');
 
   roots.forEach(root => {
-    if (!visitedSet.has(root.full_name)) {
-      ul.appendChild(buildTreeNode(root, visitedSet));
+    if (!processedSet.has(root.full_name)) {
+      ul.appendChild(buildTreeNode(root, processedSet));
     }
   });
 
-  // Tampilkan juga anggota melayang (jika ada yang terlewat dari pohon utama)
+  // Tangani anggota terlantar (jika ada data melayang)
   membersData.forEach(m => {
-    if (!visitedSet.has(m.full_name)) {
-      ul.appendChild(buildTreeNode(m, visitedSet));
+    if (!processedSet.has(m.full_name)) {
+      ul.appendChild(buildTreeNode(m, processedSet));
     }
   });
 
   container.appendChild(ul);
 }
 
-// Fungsi Rekursif Membuat Node Pohon (Aman dari Stack Overflow)
-function buildTreeNode(member, visitedSet) {
-  visitedSet.add(member.full_name);
+// Fungsi Rekursif Membangun Cabang Silsilah
+function buildTreeNode(member, processedSet) {
+  processedSet.add(member.full_name);
 
   const li = document.createElement('li');
-  const cardContainer = document.createElement('div');
-  cardContainer.className = 'member-card-container';
+  const coupleWrapper = document.createElement('div');
+  coupleWrapper.className = 'couple-wrapper';
 
-  // Kartu Utama
-  cardContainer.innerHTML = createCardHTML(member);
+  // Rendernode utama
+  coupleWrapper.innerHTML = createNodeHTML(member);
 
-  // Tampilkan pasangan jika ada dan belum pernah di-render
+  // Jika memiliki pasangan terdaftar,gabungkan dalam couple-wrapper tanpa membuat node terpisah
+  let spouseMember = null;
   if (member.spouse_name && member.spouse_name !== '-') {
-    const spouseObj = membersData.find(m => m.full_name === member.spouse_name);
-    if (spouseObj) {
-      visitedSet.add(spouseObj.full_name);
-      cardContainer.innerHTML += createCardHTML(spouseObj, true);
+    spouseMember = membersData.find(m => m.full_name === member.spouse_name);
+    if (spouseMember && !processedSet.has(spouseMember.full_name)) {
+      processedSet.add(spouseMember.full_name);
+      coupleWrapper.innerHTML += `<span class="heart-icon">🩷</span>` + createNodeHTML(spouseMember);
     }
   }
 
-  li.appendChild(cardContainer);
+  li.appendChild(coupleWrapper);
 
-  // Cari anak-anak dari anggota ini (atau dari pasangannya)
+  // Cari Anak dari Individu atau Pasangannya
   const children = membersData.filter(m => {
-    const matchesParent = m.parent_name === member.full_name || (member.spouse_name && m.parent_name === member.spouse_name);
-    return matchesParent && !visitedSet.has(m.full_name);
+    const isChildOfMember = m.parent_name === member.full_name;
+    const isChildOfSpouse = spouseMember && m.parent_name === spouseMember.full_name;
+    return (isChildOfMember || isChildOfSpouse) && !processedSet.has(m.full_name);
   });
 
-  // Urutkan anak: Tua di KANAN, Muda di KIRI (Descending Order)
+  // Urutkan Anak: Paling Tua (Anak ke-1) di KANAN, Paling Muda di KIRI
   children.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   if (children.length > 0) {
     const childrenUl = document.createElement('ul');
     children.forEach(child => {
-      childrenUl.appendChild(buildTreeNode(child, visitedSet));
+      childrenUl.appendChild(buildTreeNode(child, processedSet));
     });
     li.appendChild(childrenUl);
   }
 
   return li;
+}
+
+// Tampilkan Detail Kerabat
+function showDetail(id) {
+  const member = membersData.find(m => m.id === id);
+  if (!member) return;
+
+  alert(
+    `📌 DETAIL KERABAT:\n\n` +
+    `Nama Lengkap: ${member.full_name}\n` +
+    `Jenis Kelamin: ${member.gender}\n` +
+    `Orang Tua: ${member.parent_name || '-'}\n` +
+    `Pasangan: ${member.spouse_name || '-'}\n` +
+    `Anak Ke-: ${member.child_order || '-'}\n` +
+    `Status: ${member.status}`
+  );
 }
 
 // Dropdown Pilihan Anggota
@@ -186,7 +210,7 @@ function updateMemberDropdowns() {
   });
 }
 
-// Tambah Kerabat Otomatis
+// Quick Add Relative
 function quickAddRelative(targetName) {
   const relType = prompt(
     `Tambahkan hubungan untuk ${targetName}:\n\n1 = Anak (Sebutkan ${targetName} sebagai Orang Tua)\n2 = Pasangan (Sebutkan ${targetName} sebagai Pasangan)\n\nMasukkan angka (1/2):`
@@ -207,7 +231,7 @@ function quickAddRelative(targetName) {
   }
 }
 
-// Reset Form Tambah Data
+// Reset Form
 function resetForm() {
   document.getElementById('addMemberForm').reset();
   document.getElementById('formTitle').innerText = "+ Tambah Anggota Keluarga";
@@ -312,10 +336,10 @@ document.getElementById('editMemberForm').addEventListener('submit', async (e) =
     id: document.getElementById('edit_id').value,
     full_name: document.getElementById('edit_full_name').value,
     gender: document.getElementById('edit_gender').value,
-    parent_name: document.getElementById('parent_name').value,
-    spouse_name: document.getElementById('spouse_name').value,
-    child_order: document.getElementById('child_order').value,
-    status: document.getElementById('status').value,
+    parent_name: document.getElementById('edit_parent_name').value,
+    spouse_name: document.getElementById('edit_spouse_name').value,
+    child_order: document.getElementById('edit_child_order').value,
+    status: document.getElementById('edit_status').value,
     photo_base64: photoBase64
   };
 
@@ -349,5 +373,5 @@ async function deleteMember(id) {
   }
 }
 
-// Load data awal
+// Load data saat pertama dibuka
 loadMembers();

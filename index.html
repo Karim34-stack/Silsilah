@@ -16,13 +16,30 @@
     </div>
   </header>
 
-  <div class="container">
-    <!-- Form Utama (Tambah Anggota) -->
-    <div class="card form-card">
-      <h2 id="formTitle">+ Tambah Anggota Keluarga</h2>
-      <form id="addMemberForm">
-        <input type="hidden" id="formAction" value="add">
-        
+  <div class="main-layout">
+    <!-- Tampilan Pohon Silsilah Utama -->
+    <div class="card tree-card">
+      <div class="tree-header">
+        <h2>Pohon Silsilah Keluarga</h2>
+        <button class="btn-primary" onclick="openMemberModal('add')">+ Tambah Anggota Utama</button>
+      </div>
+      <div id="loading" style="display:none; color: #94a3b8; font-style: italic; text-align: center; margin: 20px 0;">Memuat data dari Google Sheets...</div>
+      <div class="tree-wrapper" id="treeWrapper">
+        <div class="tree" id="treeContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Form Tambah / Edit Kerabat -->
+  <div class="modal" id="memberModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeMemberModal()">&times;</span>
+      <h2 id="modalTitle">+ Tambah Anggota Keluarga</h2>
+      
+      <form id="memberForm">
+        <input type="hidden" id="form_id">
+        <input type="hidden" id="form_action" value="add">
+
         <div class="form-group">
           <label>Nama Lengkap</label>
           <input type="text" id="full_name" required placeholder="Contoh: Budi Santoso">
@@ -69,73 +86,6 @@
         </div>
 
         <button type="submit" class="btn-submit" id="btnSubmit">Simpan Data</button>
-        <button type="button" class="btn-cancel" id="btnCancel" style="display:none;" onclick="resetForm()">Batal</button>
-      </form>
-    </div>
-
-    <!-- Tampilan Pohon Silsilah -->
-    <div class="card tree-card">
-      <h2>Pohon Silsilah Keluarga</h2>
-      <div id="loading" style="display:none; color: #888; font-style: italic;">Memuat data dari Google Sheets...</div>
-      <div class="tree-wrapper" id="treeWrapper">
-        <div class="tree" id="treeContainer"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Edit Data (Khusus Admin) -->
-  <div class="modal" id="editModal">
-    <div class="modal-content">
-      <span class="close-btn" onclick="closeEditModal()">&times;</span>
-      <h2>Edit Data Anggota</h2>
-      <form id="editMemberForm">
-        <input type="hidden" id="edit_id">
-        <div class="form-group">
-          <label>Nama Lengkap</label>
-          <input type="text" id="edit_full_name" required>
-        </div>
-
-        <div class="form-group">
-          <label>Ganti Foto (Opsional)</label>
-          <input type="file" id="edit_photo_file" accept="image/*">
-        </div>
-
-        <div class="form-group">
-          <label>Jenis Kelamin</label>
-          <select id="edit_gender" required>
-            <option value="Laki-laki">Laki-laki</option>
-            <option value="Perempuan">Perempuan</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Orang Tua / Ayah / Ibu</label>
-          <select id="edit_parent_name" class="member-dropdown">
-            <option value="-">-- Pilih Orang Tua (Jika ada) --</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Nama Pasangan (Suami/Istri)</label>
-          <select id="edit_spouse_name" class="member-dropdown">
-            <option value="-">-- Pilih Pasangan (Jika ada) --</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Anak Ke-</label>
-          <input type="number" id="edit_child_order" min="1" required>
-        </div>
-
-        <div class="form-group">
-          <label>Status</label>
-          <select id="edit_status" required>
-            <option value="Masih Hidup">Masih Hidup</option>
-            <option value="Almarhum / Almarhumah">Almarhum / Almarhumah</option>
-          </select>
-        </div>
-
-        <button type="submit" class="btn-submit" id="btnEditSubmit">Update Data</button>
       </form>
     </div>
   </div>

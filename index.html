@@ -17,10 +17,12 @@
   </header>
 
   <div class="container">
-    <!-- Form Tambah Anggota -->
+    <!-- Form Utama (Tambah Anggota) -->
     <div class="card">
-      <h2>+ Tambah Anggota Keluarga</h2>
+      <h2 id="formTitle">+ Tambah Anggota Keluarga</h2>
       <form id="addMemberForm">
+        <input type="hidden" id="formAction" value="add">
+        
         <div class="form-group">
           <label>Nama Lengkap</label>
           <input type="text" id="full_name" required placeholder="Contoh: Budi Santoso">
@@ -41,14 +43,21 @@
 
         <div class="form-group">
           <label>Orang Tua / Ayah / Ibu</label>
-          <select id="parent_name" class="parent-dropdown">
+          <select id="parent_name" class="member-dropdown">
             <option value="-">-- Pilih Orang Tua (Jika ada) --</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Tahun Lahir</label>
-          <input type="number" id="birth_year" required placeholder="Contoh: 1985">
+          <label>Nama Pasangan (Suami/Istri)</label>
+          <select id="spouse_name" class="member-dropdown">
+            <option value="-">-- Pilih Pasangan (Jika ada) --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Anak Ke-</label>
+          <input type="number" id="child_order" min="1" required placeholder="Contoh: 1">
         </div>
 
         <div class="form-group">
@@ -60,6 +69,7 @@
         </div>
 
         <button type="submit" class="btn-submit" id="btnSubmit">Simpan Data</button>
+        <button type="button" class="btn-cancel" id="btnCancel" style="display:none;" onclick="resetForm()">Batal</button>
       </form>
     </div>
 
@@ -71,7 +81,7 @@
     </div>
   </div>
 
-  <!-- Modal Edit Data -->
+  <!-- Modal Edit Data (Khusus Admin) -->
   <div class="modal" id="editModal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeEditModal()">&times;</span>
@@ -98,14 +108,21 @@
 
         <div class="form-group">
           <label>Orang Tua / Ayah / Ibu</label>
-          <select id="edit_parent_name" class="parent-dropdown">
+          <select id="edit_parent_name" class="member-dropdown">
             <option value="-">-- Pilih Orang Tua (Jika ada) --</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Tahun Lahir</label>
-          <input type="number" id="edit_birth_year" required>
+          <label>Nama Pasangan (Suami/Istri)</label>
+          <select id="edit_spouse_name" class="member-dropdown">
+            <option value="-">-- Pilih Pasangan (Jika ada) --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Anak Ke-</label>
+          <input type="number" id="edit_child_order" min="1" required>
         </div>
 
         <div class="form-group">
@@ -121,7 +138,6 @@
     </div>
   </div>
 
-  <!-- Script JS Eksternal -->
   <script src="app.js"></script>
 </body>
 </html>

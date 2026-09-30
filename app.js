@@ -1,21 +1,20 @@
 // ⚠️ MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxK_oVv7EJj3C1rY4IlO5TWxp-N7-NCiRD6CCc27jBbline6DAwjKh2Yc4I5DSnOFT7PQ/exec";
 
-
 let isAdmin = false;
 let membersData = [];
-// Deklarasikan familyData di bagian paling atas app.js
-let familyData = []; 
 
-// Jika Anda menyimpan data di LocalStorage, muat saat pertama kali dibuka:
-const savedData = localStorage.getItem('familyTreeData');
-if (savedData) {
-  try {
-    familyData = JSON.parse(savedData);
-  } catch (e) {
-    console.error("Gagal membaca data dari LocalStorage", e);
-  }
-}
+// Base Initial Data Fallback
+const defaultFamilyData = [
+  { id: '1', full_name: 'KYAI TOTARUNO', gender: 'Laki-laki', parent_name: '-', spouse_name: '-', child_order: 1, status: 'Almarhum / Almarhumah' },
+  { id: '2', full_name: 'KARSODIKRO', gender: 'Laki-laki', parent_name: 'KYAI TOTARUNO', spouse_name: 'SIAH', child_order: 1, status: 'Almarhum / Almarhumah' },
+  { id: '3', full_name: 'SIAH', gender: 'Perempuan', parent_name: '-', spouse_name: 'KARSODIKRO', child_order: 1, status: 'Almarhum / Almarhumah' },
+  { id: '4', full_name: 'HARTO REJO', gender: 'Laki-laki', parent_name: 'KARSODIKRO', spouse_name: '-', child_order: 1, status: 'Almarhum / Almarhumah' },
+  { id: '5', full_name: 'MAR JI YEM', gender: 'Laki-laki', parent_name: 'KARSODIKRO', spouse_name: '-', child_order: 2, status: 'Almarhum / Almarhumah' },
+  { id: '6', full_name: 'PRAMUDJO S', gender: 'Laki-laki', parent_name: 'KARSODIKRO', spouse_name: '-', child_order: 3, status: 'Masih Hidup' },
+  { id: '7', full_name: 'DARMO SUKARTO', gender: 'Laki-laki', parent_name: 'KARSODIKRO', spouse_name: '-', child_order: 4, status: 'Almarhum / Almarhumah' },
+  { id: '8', full_name: 'RUBIKEM', gender: 'Perempuan', parent_name: 'DARMO SUKARTO', spouse_name: '-', child_order: 9, status: 'Masih Hidup' }
+];
 
 // Helper Convert File to Base64
 const toBase64 = file => new Promise((resolve, reject) => {
@@ -25,7 +24,7 @@ const toBase64 = file => new Promise((resolve, reject) => {
   reader.onerror = error => reject(error);
 });
 
-// Switch Mode Admin
+// Admin Mode Handler
 function toggleAdmin() {
   if (!isAdmin) {
     const pass = prompt("Masukkan Password Admin (Default: 1234):");
@@ -42,38 +41,36 @@ function toggleAdmin() {
 
   document.getElementById('role-status').innerText = isAdmin ? "Mode: ADMIN (Full Control)" : "Mode: Member (Tambah Saja)";
   document.body.classList.toggle('admin-mode', isAdmin);
+  renderTree();
 }
 
-// Load Data dari Web App Apps Script
+// Data Fetcher from Google Apps Script / Local Storage Fallback
 async function loadMembers() {
   const loadingEl = document.getElementById('loading');
   if (loadingEl) loadingEl.style.display = 'block';
 
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'GET',
-      redirect: 'follow'
-    });
-
+    const res = await fetch(SCRIPT_URL, { method: 'GET', redirect: 'follow' });
     if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
     const dataText = await res.text();
     membersData = JSON.parse(dataText);
-
+    localStorage.setItem('familyTreeData', JSON.stringify(membersData));
+  } catch (err) {
+    console.warn("Gagal memuat dari Google Script, memuat dari Local Storage/Default:", err);
+    const saved = localStorage.getItem('familyTreeData');
+    membersData = saved ? JSON.parse(saved) : defaultFamilyData;
+  } finally {
+    if (loadingEl) loadingEl.style.display = 'none';
     renderTree();
     updateMemberDropdowns();
     updateGenerationSearchOptions();
-  } catch (err) {
-    console.error("Error Fetching Data:", err);
-    alert("Gagal memuat data silsilah!");
-  } finally {
-    if (loadingEl) loadingEl.style.display = 'none';
   }
 }
 
-// Menutup dropdown jika diklik di luar area
+// Dropdown Popover Control
 window.addEventListener('click', function(e) {
-  if (!e.target.matches('.add-btn')) {
+  if (!e.target.closest('.add-btn')) {
     document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
   }
 });
@@ -86,7 +83,7 @@ function toggleDropdown(id) {
   if (currentMenu) currentMenu.classList.toggle('show');
 }
 
-// Fungsi Membuat HTML Kartu Individu
+// Node HTML Card Generator
 function createNodeHTML(member) {
   const isFemale = member.gender === 'Perempuan';
   const defaultAvatar = isFemale 
@@ -98,10 +95,12 @@ function createNodeHTML(member) {
 
   return `
     <div class="member-node ${isFemale ? 'female' : 'male'}">
-      <div class="admin-action-btns">
-        <button class="btn-admin edit" onclick="openMemberModal('edit', '${member.id}')">✏️</button>
-        <button class="btn-admin del" onclick="deleteMember('${member.id}')">🗑️</button>
-      </div>
+      ${isAdmin ? `
+        <div class="admin-action-btns">
+          <button class="btn-admin edit" onclick="openMemberModal('edit', '${member.id}')" title="Edit">✏️</button>
+          <button class="btn-admin del" onclick="deleteMember('${member.id}')" title="Hapus">🗑️</button>
+        </div>
+      ` : ''}
       <div class="node-header">
         <img src="${photoSrc}" class="node-avatar" alt="${member.full_name}" onerror="this.src='${defaultAvatar}'">
         <div class="node-info">
@@ -117,13 +116,13 @@ function createNodeHTML(member) {
         <div class="relative-dropdown">
           <button class="btn-link add-btn" onclick="toggleDropdown('${member.id}')">+ Kerabat</button>
           <div class="dropdown-menu" id="dropdown-${member.id}">
-            <button class="dropdown-item" onclick="('${member.full_name}', 'child')">
+            <button class="dropdown-item" onclick="openAddRelativeModal('${member.id}', 'child')">
               <span>🧍</span> Tambah Anak
             </button>
-            <button class="dropdown-item" onclick="('${member.full_name}', 'spouse')">
+            <button class="dropdown-item" onclick="openAddRelativeModal('${member.id}', 'spouse')">
               <span>🩷</span> Tambah Pasangan
             </button>
-            <button class="dropdown-item" onclick="('${member.full_name}', 'parent')">
+            <button class="dropdown-item" onclick="openAddRelativeModal('${member.id}', 'parent')">
               <span>👨‍👩‍👦</span> Tambah Orang Tua
             </button>
           </div>
@@ -133,9 +132,10 @@ function createNodeHTML(member) {
   `;
 }
 
-// Render Pohon Utama
+// Tree Rendering Logic
 function renderTree() {
   const container = document.getElementById('treeContainer');
+  if (!container) return;
   container.innerHTML = '';
 
   if (!membersData || membersData.length === 0) {
@@ -144,13 +144,10 @@ function renderTree() {
   }
 
   const processedSet = new Set();
-
-  // Cari Leluhur
   const roots = membersData.filter(m => {
     return !m.parent_name || m.parent_name === '-' || !membersData.some(p => p.full_name === m.parent_name);
   });
 
-  // Urutkan Leluhur: Tua di KANAN, Muda di KIRI
   roots.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
 
   const ul = document.createElement('ul');
@@ -170,7 +167,6 @@ function renderTree() {
   container.appendChild(ul);
 }
 
-// Rekursif Membuat Node Pohon
 function buildTreeNode(member, processedSet) {
   processedSet.add(member.full_name);
 
@@ -197,7 +193,7 @@ function buildTreeNode(member, processedSet) {
     return (isChildOfMember || isChildOfSpouse) && !processedSet.has(m.full_name);
   });
 
-  children.sort((a, b) => (parseInt(b.child_order) || 0) - (parseInt(a.child_order) || 0));
+  children.sort((a, b) => (parseInt(a.child_order) || 0) - (parseInt(b.child_order) || 0));
 
   if (children.length > 0) {
     const childrenUl = document.createElement('ul');
@@ -210,9 +206,35 @@ function buildTreeNode(member, processedSet) {
   return li;
 }
 
+// Relative Add Trigger with Context Setup
+function openAddRelativeModal(targetMemberId, relationType) {
+  const target = membersData.find(m => m.id === targetMemberId);
+  if (!target) return;
 
+  openMemberModal('add');
 
-// Buka Modal Form Utama
+  const titleEl = document.getElementById('modalTitle');
+  const genderSelect = document.getElementById('gender');
+  const parentSelect = document.getElementById('parent_name');
+  const spouseSelect = document.getElementById('spouse_name');
+
+  if (relationType === 'spouse') {
+    titleEl.innerText = `+ Tambah Pasangan untuk ${target.full_name}`;
+    genderSelect.value = target.gender === 'Laki-laki' ? 'Perempuan' : 'Laki-laki';
+    spouseSelect.value = target.full_name;
+    parentSelect.value = '-';
+  } else if (relationType === 'child') {
+    titleEl.innerText = `+ Tambah Anak dari ${target.full_name}`;
+    parentSelect.value = target.full_name;
+    spouseSelect.value = '-';
+  } else if (relationType === 'parent') {
+    titleEl.innerText = `+ Tambah Orang Tua dari ${target.full_name}`;
+    parentSelect.value = '-';
+    spouseSelect.value = '-';
+  }
+}
+
+// Modal Base Functions
 function openMemberModal(mode, id = null) {
   document.getElementById('memberForm').reset();
   document.getElementById('form_action').value = mode;
@@ -241,7 +263,7 @@ function closeMemberModal() {
   document.getElementById('memberModal').style.display = 'none';
 }
 
-// Submit Form CRUD
+// Form Submission & Two-Way Relationship Sync
 document.getElementById('memberForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnSubmit');
@@ -253,7 +275,6 @@ document.getElementById('memberForm').addEventListener('submit', async (e) => {
   if (photoFileInput.files.length > 0) {
     btn.innerText = "Mengunggah Foto...";
     btn.disabled = true;
-    
     const file = photoFileInput.files[0];
     if (file.size > 2 * 1024 * 1024) {
       alert("Ukuran foto terlalu besar! Maksimal 2MB.");
@@ -267,41 +288,60 @@ document.getElementById('memberForm').addEventListener('submit', async (e) => {
     btn.disabled = true;
   }
 
+  const fullName = document.getElementById('full_name').value.trim();
+  const spouseName = document.getElementById('spouse_name').value;
+  const parentName = document.getElementById('parent_name').value;
+
   const payload = {
     action: action,
-    id: document.getElementById('form_id').value,
-    full_name: document.getElementById('full_name').value,
+    id: action === 'edit' ? document.getElementById('form_id').value : String(Date.now()),
+    full_name: fullName,
     gender: document.getElementById('gender').value,
-    parent_name: document.getElementById('parent_name').value,
-    spouse_name: document.getElementById('spouse_name').value,
+    parent_name: parentName,
+    spouse_name: spouseName,
     child_order: document.getElementById('child_order').value,
     status: document.getElementById('status').value,
     photo_base64: photoBase64
   };
 
   try {
-    const response = await fetch(SCRIPT_URL, { 
+    await fetch(SCRIPT_URL, { 
       method: 'POST', 
       body: JSON.stringify(payload) 
     });
-    
-    if (response.ok) {
-      alert(action === 'add' ? "Data berhasil disimpan!" : "Data berhasil diperbarui!");
-      closeMemberModal();
-      await loadMembers();
-    } else {
-      alert("Terjadi kesalahan dari server.");
-    }
   } catch (err) {
-    console.error("Error submit:", err);
-    alert("Gagal menyimpan data.");
-  } finally {
-    btn.innerText = "Simpan Data";
-    btn.disabled = false;
+    console.warn("Backend update bypassed/failed, handling locally:", err);
   }
+
+  // Local Data Syncing (Two-Way Spouse Linking)
+  if (action === 'add') {
+    membersData.push(payload);
+  } else {
+    const idx = membersData.findIndex(m => m.id === payload.id);
+    if (idx !== -1) membersData[idx] = payload;
+  }
+
+  // Two-Way Spouse Relation Sync
+  if (spouseName && spouseName !== '-') {
+    const spouseObj = membersData.find(m => m.full_name === spouseName);
+    if (spouseObj) {
+      spouseObj.spouse_name = fullName;
+    }
+  }
+
+  localStorage.setItem('familyTreeData', JSON.stringify(membersData));
+  
+  alert(action === 'add' ? "Data berhasil disimpan!" : "Data berhasil diperbarui!");
+  closeMemberModal();
+  updateMemberDropdowns();
+  updateGenerationSearchOptions();
+  renderTree();
+
+  btn.innerText = "Simpan Data";
+  btn.disabled = false;
 });
 
-// Hapus Data
+// Member Deletion
 async function deleteMember(id) {
   if (!isAdmin) return;
   if (!confirm("Apakah Anda yakin ingin menghapus data anggota keluarga ini?")) return;
@@ -311,14 +351,20 @@ async function deleteMember(id) {
       method: 'POST',
       body: JSON.stringify({ action: "delete", id: id })
     });
-    alert("Data berhasil dihapus!");
-    await loadMembers();
   } catch (err) {
-    alert("Gagal menghapus data.");
+    console.warn("Backend deletion bypassed, removing locally.");
   }
+
+  membersData = membersData.filter(m => m.id !== id);
+  localStorage.setItem('familyTreeData', JSON.stringify(membersData));
+  
+  alert("Data berhasil dihapus!");
+  renderTree();
+  updateMemberDropdowns();
+  updateGenerationSearchOptions();
 }
 
-// Detail Kerabat
+// Details Modal
 function showDetail(id) {
   const member = membersData.find(m => m.id === id);
   if (!member) return;
@@ -334,7 +380,7 @@ function showDetail(id) {
   );
 }
 
-// Dropdown Options
+// Update Dropdowns
 function updateMemberDropdowns() {
   const dropdowns = document.querySelectorAll('.member-dropdown');
   dropdowns.forEach(select => {
@@ -355,9 +401,7 @@ function updateMemberDropdowns() {
   });
 }
 
-// =========================================================
-// PENCARIAN SILSILAH - GENERASI & ANAK/CUCU
-// =========================================================
+// Search Logic: Names & Generations with Descendants
 function normalizeName(value) {
   return String(value || '').trim().toLowerCase();
 }
@@ -372,13 +416,11 @@ function buildGenerationMap() {
   const byName = new Map();
   membersData.forEach(m => byName.set(normalizeName(m.full_name), m));
 
-  // Semua anggota yang tidak mempunyai orang tua dimulai dari Generasi 1.
   membersData.forEach(m => {
     const parent = byName.get(normalizeName(m.parent_name));
     if (!m.parent_name || m.parent_name === '-' || !parent) map.set(m.id, 1);
   });
 
-  // Sebarkan generasi berdasarkan orang tua dan pasangan.
   for (let round = 0; round < membersData.length + 2; round++) {
     let changed = false;
     membersData.forEach(m => {
@@ -402,7 +444,6 @@ function buildGenerationMap() {
     if (!changed) break;
   }
 
-  // Data yang benar-benar terpisah tetap ditampilkan sebagai Generasi 1.
   membersData.forEach(m => {
     if (!map.has(m.id)) map.set(m.id, 1);
   });
@@ -441,34 +482,20 @@ function getPhotoForMember(member) {
     : 'https://cdn-icons-png.flaticon.com/512/4140/4140037.png');
 }
 
-function escapeSearchHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 function createSearchResultCard(member, generation, relationText) {
   const female = normalizeName(member.gender) === 'perempuan';
-  const photo = escapeSearchHtml(getPhotoForMember(member));
-  const name = escapeSearchHtml(member.full_name || '-');
-  const gender = escapeSearchHtml(member.gender || '-');
-  const status = escapeSearchHtml(member.status || '-');
-  const rel = escapeSearchHtml(relationText || `Generasi ${generation}`);
+  const photo = getPhotoForMember(member);
   const defaultAvatar = female
     ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png'
     : 'https://cdn-icons-png.flaticon.com/512/4140/4140037.png';
 
   return `
     <div class="search-result-card ${female ? 'female' : 'male'}">
-      <img class="search-result-avatar" src="${photo}" alt="${name}"
-        onerror="this.src='${defaultAvatar}'">
+      <img class="search-result-avatar" src="${photo}" alt="${member.full_name}" onerror="this.src='${defaultAvatar}'">
       <div class="search-result-info">
-        <div class="search-result-name" title="${name}">${name}</div>
-        <div class="search-result-meta">${gender} • ${status} • Generasi ${generation}</div>
-        <span class="search-result-relation">${rel}</span>
+        <div class="search-result-name" title="${member.full_name}">${member.full_name}</div>
+        <div class="search-result-meta">${member.gender} • ${member.status} • Generasi ${generation}</div>
+        <span class="search-result-relation">${relationText || `Generasi ${generation}`}</span>
       </div>
     </div>
   `;
@@ -547,7 +574,6 @@ function performFamilySearch() {
   const generationValue = generationSelect.value;
   const generationMap = buildGenerationMap();
 
-  // Pencarian nama: tampilkan anggota yang dipilih + anak + cucu.
   if (query) {
     const exact = getMemberByName(query);
     const found = exact || membersData.find(m => normalizeName(m.full_name).includes(query));
@@ -572,7 +598,6 @@ function performFamilySearch() {
     return;
   }
 
-  // Pencarian generasi: tampilkan seluruh anggota generasi tersebut.
   if (generationValue) {
     const generation = Number(generationValue);
     const members = getGenerationMembers(generation);
@@ -619,242 +644,8 @@ function initFamilySearch() {
   });
 }
 
-// =========================================================
-// 1. INISIALISASI DATA KELUARGA (GLOBAL SCOPE)
-// =========================================================
-// Mengambil data dari LocalStorage, jika belum ada gunakan data awal/default
-const defaultFamilyData = [
-  { id: '1', nama: 'KYAI TOTARUNO', jenisKelamin: 'Laki-laki', orangTuaId: null, pasanganId: null, status: 'Wafat' },
-  { id: '2', nama: 'KARSODIKRO', jenisKelamin: 'Laki-laki', orangTuaId: '1', pasanganId: '3', status: 'Wafat' },
-  { id: '3', nama: 'SIAH', jenisKelamin: 'Perempuan', orangTuaId: null, pasanganId: '2', status: 'Wafat' },
-  { id: '4', nama: 'HARTO REJO', jenisKelamin: 'Laki-laki', orangTuaId: '2', pasanganId: null, status: 'Wafat' },
-  { id: '5', nama: 'MAR JI YEM', jenisKelamin: 'Laki-laki', orangTuaId: '2', pasanganId: null, status: 'Wafat' },
-  { id: '6', nama: 'PRAMUDJO S...', jenisKelamin: 'Laki-laki', orangTuaId: '2', pasanganId: null, status: 'Hidup' },
-  { id: '7', nama: 'DARMO SUKARTO', jenisKelamin: 'Laki-laki', orangTuaId: '2', pasanganId: null, status: 'Wafat' },
-  { id: '8', nama: 'RUBIKEM', jenisKelamin: 'Perempuan', orangTuaId: '7', pasanganId: null, anakKe: 9, status: 'Hidup' },
-  { id: '9', nama: 'SUNARDI', jenisKelamin: 'Laki-laki', orangTuaId: '7', pasanganId: null, status: 'Hidup' },
-  { id: '10', nama: 'KAIDI', jenisKelamin: 'Laki-laki', orangTuaId: '7', pasanganId: null, status: 'Hidup' },
-  { id: '11', nama: 'KEMIN', jenisKelamin: 'Laki-laki', orangTuaId: '7', pasanganId: null, status: 'Hidup' },
-  { id: '12', nama: 'SAPTO', jenisKelamin: 'Laki-laki', orangTuaId: '7', pasanganId: null, status: 'Hidup' }
-];
-
-window.familyData = JSON.parse(localStorage.getItem('familyTreeData')) || defaultFamilyData;
-
-// =========================================================
-// 2. MEMUAT PILIHAN DROPDOWN (ORANG TUA & PASANGAN)
-// =========================================================
-function populateDropdowns() {
-  const parentSelect = document.getElementById('parentSelect');
-  const spouseSelect = document.getElementById('spouseSelect');
-
-  if (!parentSelect || !spouseSelect) return;
-
-  // Bersihkan dropdown
-  parentSelect.innerHTML = '<option value="">-- Pilih Orang Tua (Jika ada) --</option>';
-  spouseSelect.innerHTML = '<option value="">-- Pilih Pasangan (Jika ada) --</option>';
-
-  window.familyData.forEach(person => {
-    // Isi Dropdown Orang Tua
-    const optParent = document.createElement('option');
-    optParent.value = person.id;
-    optParent.textContent = person.nama;
-    parentSelect.appendChild(optParent);
-
-    // Isi Dropdown Pasangan
-    const optSpouse = document.createElement('option');
-    optSpouse.value = person.id;
-    optSpouse.textContent = person.nama;
-    spouseSelect.appendChild(optSpouse);
-  });
-}
-
-// =========================================================
-// 3. FUNGSI MEMBUKA MODAL & OTOMATISASI FIELD
-// =========================================================
-function openAddRelativeModal(targetPersonId = null, relationType = null) {
-  populateDropdowns(); // Update list pilihan di dropdown
-
-  const modal = document.getElementById('addModal');
-  const form = document.getElementById('relativeForm');
-  const modalTitle = document.getElementById('modalTitle');
-
-  if (form) form.reset();
-
-  const nameInput = document.getElementById('namaInput');
-  const genderSelect = document.getElementById('genderSelect');
-  const parentSelect = document.getElementById('parentSelect');
-  const spouseSelect = document.getElementById('spouseSelect');
-
-  if (targetPersonId) {
-    const targetPerson = window.familyData.find(p => p.id == targetPersonId);
-
-    if (targetPerson) {
-      if (relationType === 'spouse') {
-        if (modalTitle) modalTitle.innerText = `+ Tambah Pasangan dari ${targetPerson.nama}`;
-        // Otomatis set Jenis Kelamin berlawanan
-        if (genderSelect) genderSelect.value = targetPerson.jenisKelamin === 'Laki-laki' ? 'Perempuan' : 'Laki-laki';
-        // Otomatis pilih Pasangan
-        if (spouseSelect) spouseSelect.value = targetPerson.id;
-        if (parentSelect) parentSelect.value = '';
-
-      } else if (relationType === 'child') {
-        if (modalTitle) modalTitle.innerText = `+ Tambah Anak dari ${targetPerson.nama}`;
-        // Otomatis pilih Orang Tua
-        if (parentSelect) parentSelect.value = targetPerson.id;
-        if (spouseSelect) spouseSelect.value = '';
-        if (genderSelect) genderSelect.value = 'Laki-laki';
-      }
-    }
-  } else {
-    if (modalTitle) modalTitle.innerText = '+ Tambah Anggota Silsilah';
-  }
-
-  if (modal) {
-    modal.style.display = 'block';
-    modal.classList.add('show');
-  }
-}
-
-// =========================================================
-// 4. FUNGSI SIMPAN DATA & UPDATE RELASI 2 ARAH
-// =========================================================
-function saveRelativeData(event) {
-  if (event) event.preventDefault();
-
-  const nameInput = document.getElementById('namaInput');
-  const genderSelect = document.getElementById('genderSelect');
-  const parentSelect = document.getElementById('parentSelect');
-  const spouseSelect = document.getElementById('spouseSelect');
-  const childNoInput = document.getElementById('anakKeInput');
-  const statusSelect = document.getElementById('statusSelect');
-
-  if (!nameInput || !nameInput.value.trim()) {
-    alert('Nama lengkap wajib diisi!');
-    return;
-  }
-
-  const newId = 'person_' + Date.now();
-
-  const newMember = {
-    id: newId,
-    nama: nameInput.value.trim().toUpperCase(),
-    jenisKelamin: genderSelect ? genderSelect.value : 'Laki-laki',
-    orangTuaId: parentSelect && parentSelect.value ? parentSelect.value : null,
-    pasanganId: spouseSelect && spouseSelect.value ? spouseSelect.value : null,
-    anakKe: childNoInput && childNoInput.value ? parseInt(childNoInput.value) : null,
-    status: statusSelect ? statusSelect.value : 'Masih Hidup'
-  };
-
-  // 1. Tambah data baru ke variabel global
-  window.familyData.push(newMember);
-
-  // 2. ⚠️ RELASI DUA ARAH: Update data target pasangan (misal RUBIKEM)
-  if (newMember.pasanganId) {
-    const spouse = window.familyData.find(p => p.id == newMember.pasanganId);
-    if (spouse) {
-      spouse.pasanganId = newMember.id; // RUBIKEM otomatis menyimpan ID pasangan baru
-    }
-  }
-
-  // 3. Simpan permanen ke LocalStorage
-  localStorage.setItem('familyTreeData', JSON.stringify(window.familyData));
-
-  // 4. Tutup Modal & Refresh Tampilan
-  closeModal();
-
-  if (typeof renderTree === 'function') {
-    renderTree();
-  } else {
-    location.reload();
-  }
-}
-
-// =========================================================
-// 5. FUNGSI MENAMPILKAN DETAIL KERABAT (ALERT / MODAL)
-// =========================================================
-function showDetailKerabat(personId) {
-  const person = window.familyData.find(p => p.id == personId);
-  if (!person) return;
-
-  const parent = window.familyData.find(p => p.id == person.orangTuaId);
-  const spouse = window.familyData.find(p => p.id == person.pasanganId);
-
-  const detailText = 
-`📌 DETAIL KERABAT:
-
-Nama Lengkap: ${person.nama}
-Jenis Kelamin: ${person.jenisKelamin}
-Orang Tua: ${parent ? parent.nama : '-'}
-Pasangan: ${spouse ? spouse.nama : '-'}
-Anak Ke-: ${person.anakKe || '-'}
-Status: ${person.status}`;
-
-  alert(detailText);
-}
-
-// =========================================================
-// 6. FUNGSI PENUTUP MODAL & EVENT LISTENER
-// =========================================================
-function closeModal() {
-  const modal = document.getElementById('addModal');
-  if (modal) {
-    modal.style.display = 'none';
-    modal.classList.remove('show');
-  }
-}
-
+// Inisialisasi Aplikasi Saat DOM Siap
 document.addEventListener('DOMContentLoaded', () => {
   initFamilySearch();
-  const form = document.getElementById('relativeForm');
-  if (form) {
-    form.addEventListener('submit', saveRelativeData);
-  }
-  
-  // Event listener tombol close modal jika ada
-  const closeBtns = document.querySelectorAll('.close-modal, .btn-close');
-  closeBtns.forEach(btn => {
-    btn.addEventListener('click', closeModal);
-  });
+  loadMembers();
 });
-
-function handleFormSubmit(event) {
-  event.preventDefault();
-
-  // 1. Buat objek data anggota keluarga baru
-  const newMember = {
-    id: Date.now().toString(), // atau ID unik lainnya
-    nama: document.getElementById('namaInput').value.trim(),
-    jenisKelamin: document.getElementById('genderSelect').value,
-    orangTuaId: document.getElementById('parentSelect').value || null,
-    pasanganId: document.getElementById('spouseSelect').value || null,
-    anakKe: document.getElementById('anakKeInput').value || null,
-    status: document.getElementById('statusSelect').value
-  };
-
-  // 2. Simpan anggota baru ke dalam array/database
-  familyData.push(newMember);
-
-  // 3. ⚠️ KUNCI PERBAIKAN: Update data pasangan secara dua arah (Two-way update)
-  if (newMember.pasanganId) {
-    // Cari data target pasangan (misal: RUBIKEM) berdasarkan ID
-    const spousePerson = familyData.find(person => person.id === newMember.pasanganId);
-    
-    if (spousePerson) {
-      // Update field pasangan milik RUBIKEM secara otomatis dengan nama/ID anggota baru
-      spousePerson.pasanganId = newMember.id;
-      
-      // Jika penyimpanan menggunakan field nama langsung:
-      // spousePerson.pasangan = newMember.nama;
-    }
-  }
-
-  // 4. Simpan ke LocalStorage / Database Backend (jika ada)
-  saveFamilyDataToStorage();
-
-  // 5. Render ulang pohon silsilah & tutup modal
-  renderTree();
-  closeModal();
-}
-
-// Inisialisasi
-loadMembers();

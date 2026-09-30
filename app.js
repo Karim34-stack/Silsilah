@@ -365,7 +365,13 @@ async function deleteMember(id) {
 }
 
 // Details Modal
-// Detail Kerabat dengan Daftar Anak & Seluruh Keturunan (Aman untuk Silsilah Tree)
+// Fungsi untuk Menutup Modal Detail
+function closeDetailModal() {
+  const modal = document.getElementById('detailModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// Detail Kerabat & Keturunan Menggunakan Modal (Aman dari Konflik Render Tree)
 function showDetail(id) {
   const member = membersData.find(m => m.id === id);
   if (!member) return;
@@ -387,18 +393,20 @@ function showDetail(id) {
 
   childrenList.sort((a, b) => (parseInt(a.child_order) || 0) - (parseInt(b.child_order) || 0));
 
-  let childrenText = "-";
+  let childrenHTML = "<em>Tidak ada data anak langsung.</em>";
   if (childrenList.length > 0) {
-    childrenText = "\n" + childrenList.map((child, index) => {
-      const orderInfo = child.child_order ? `(Anak Ke-${child.child_order})` : `(${index + 1})`;
-      return `   ${index + 1}. ${child.full_name} ${orderInfo}`;
-    }).join("\n");
+    childrenHTML = "<ol style='padding-left: 20px; margin-top: 5px;'>";
+    childrenList.forEach(child => {
+      const orderInfo = child.child_order ? `(Anak Ke-${child.child_order})` : '';
+      childrenHTML += `<li><strong>${child.full_name}</strong> ${orderInfo} - <small>${child.status || 'Masih Hidup'}</small></li>`;
+    });
+    childrenHTML += "</ol>";
   }
 
   // 2. Cari Seluruh Keturunan secara Bertingkat (Anak, Cucu, Cicit, dst.)
   const visitedNames = new Set();
   
-  function getSubDescendantsText(parentNames, level = 1) {
+  function getSubDescendantsList(parentNames, level = 1) {
     if (!parentNames || parentNames.length === 0 || level > 10) return [];
 
     const nextGeneration = membersData.filter(m => {
@@ -410,9 +418,7 @@ function showDetail(id) {
 
     nextGeneration.sort((a, b) => (parseInt(a.child_order) || 0) - (parseInt(b.child_order) || 0));
 
-    const indent = "   ".repeat(level);
     const label = level === 1 ? "Anak" : level === 2 ? "Cucu" : level === 3 ? "Cicit" : `Generasi ${level}`;
-
     let result = [];
     const nextParentNames = [];
 
@@ -420,15 +426,21 @@ function showDetail(id) {
       const normName = helperNormalize(item.full_name);
       visitedNames.add(normName);
 
-      result.push(`${indent}• [${label}] ${item.full_name} (${item.status || 'Masih Hidup'})`);
+      const paddingLeft = (level - 1) * 20;
+      result.push(`
+        <div style="margin-left: ${paddingLeft}px; margin-bottom: 4px;">
+          • <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold;">${label}</span> 
+          <strong>${item.full_name}</strong> <small>(${item.status || 'Masih Hidup'})</small>
+        </div>
+      `);
+
       nextParentNames.push(item.full_name);
-      
       if (item.spouse_name && item.spouse_name !== '-') {
         nextParentNames.push(item.spouse_name);
       }
     });
 
-    const deeper = getSubDescendantsText(nextParentNames, level + 1);
+    const deeper = getSubDescendantsList(nextParentNames, level + 1);
     return result.concat(deeper);
   }
 
@@ -437,31 +449,49 @@ function showDetail(id) {
     initialParents.push(member.spouse_name);
   }
 
-  // Tandai anggota utama & pasangan agar tidak diproses ulang sebagai keturunan
   visitedNames.add(targetNameNorm);
   if (member.spouse_name && member.spouse_name !== '-') {
     visitedNames.add(helperNormalize(member.spouse_name));
   }
 
-  const allDescendantsList = getSubDescendantsText(initialParents, 1);
+  const allDescendantsList = getSubDescendantsList(initialParents, 1);
 
-  let descendantsText = "-";
+  let descendantsHTML = "<em>Tidak ada keturunan terdaftar.</em>";
   if (allDescendantsList.length > 0) {
-    descendantsText = "\n" + allDescendantsList.join("\n");
+    descendantsHTML = `<div style="margin-top: 8px; max-height: 200px; overflow-y: auto; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+      ${allDescendantsList.join('')}
+    </div>`;
   }
 
-  // 3. Tampilkan Alert
-  alert(
-    `📌 DETAIL KERABAT:\n\n` +
-    `Nama Lengkap: ${member.full_name}\n` +
-    `Jenis Kelamin: ${member.gender}\n` +
-    `Orang Tua: ${member.parent_name || '-'}\n` +
-    `Pasangan: ${member.spouse_name || '-'}\n` +
-    `Anak Ke-: ${member.child_order || '-'}\n` +
-    `Status: ${member.status}\n\n` +
-    `👨‍‍👩‍👧 DAFTAR ANAK (Langsung): ${childrenText}\n\n` +
-    `🌳 SELURUH KETURUNAN: ${descendantsText}`
-  );
+  // 3. Render Informasi ke dalam Modal
+  const modalBody = document.getElementById('detailModalBody');
+  if (modalBody) {
+    modalBody.innerHTML = `
+      <table style="width:100%; border-collapse: collapse; margin-bottom: 15px;">
+        <tr><td style="padding: 4px 0; width: 35%;"><strong>Nama Lengkap</strong></td><td>: ${member.full_name}</td></tr>
+        <tr><td style="padding: 4px 0;"><strong>Jenis Kelamin</strong></td><td>: ${member.gender}</td></tr>
+        <tr><td style="padding: 4px 0;"><strong>Orang Tua</strong></td><td>: ${member.parent_name || '-'}</td></tr>
+        <tr><td style="padding: 4px 0;"><strong>Pasangan</strong></td><td>: ${member.spouse_name || '-'}</td></tr>
+        <tr><td style="padding: 4px 0;"><strong>Anak Ke-</strong></td><td>: ${member.child_order || '-'}</td></tr>
+        <tr><td style="padding: 4px 0;"><strong>Status</strong></td><td>: ${member.status}</td></tr>
+      </table>
+
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 10px 0;">
+
+      <div style="margin-bottom: 15px;">
+        <h4 style="margin: 0 0 5px 0; color: #1e293b;">👨‍👩‍👧 Daftar Anak Langsung:</h4>
+        ${childrenHTML}
+      </div>
+
+      <div>
+        <h4 style="margin: 0 0 5px 0; color: #1e293b;">🌳 Seluruh Keturunan:</h4>
+        ${descendantsHTML}
+      </div>
+    `;
+
+    // Tampilkan Modal
+    document.getElementById('detailModal').style.display = 'flex';
+  }
 }
 
 // Update Dropdowns

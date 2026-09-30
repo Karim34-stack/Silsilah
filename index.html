@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Silsilah Keluarga Interaktif</title>
   <link rel="stylesheet" href="style.css">
+  <!-- FontAwesome Font Icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
@@ -20,9 +22,9 @@
     </div>
   </header>
 
-  <!-- Pencarian Silsilah -->
+  <!-- Panel Pencarian Silsilah -->
   <section class="search-panel">
-    <div class="search-title">🔎 Cari Silsilah</div>
+    <div class="search-title">🔍 Cari Silsilah</div>
     <div class="search-controls">
       <div class="search-field search-name-field">
         <label for="searchName">Cari nama</label>
@@ -34,7 +36,7 @@
           <option value="">-- Semua Generasi --</option>
         </select>
       </div>
-      <button type="button" class="btn-search" id="btnSearch">🔎 Cari</button>
+      <button type="button" class="btn-search" id="btnSearch">🔍 Cari</button>
       <button type="button" class="btn-clear-search" id="btnClearSearch">↺ Reset</button>
     </div>
     <div id="searchHint" class="search-hint">Cari nama untuk melihat anggota tersebut beserta anak dan cucunya, atau pilih generasi untuk menampilkan semua anggotanya.</div>
@@ -59,7 +61,7 @@
     </div>
   </main>
 
-  <!-- Modal Form Tambah / Edit Kerabat -->
+  <!-- Modal Form Tambah / Edit Anggota & Kerabat -->
   <div class="modal" id="memberModal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeMemberModal()">&times;</span>
@@ -70,17 +72,17 @@
         <input type="hidden" id="form_action" value="add">
 
         <div class="form-group">
-          <label>Nama Lengkap</label>
+          <label for="full_name">Nama Lengkap</label>
           <input type="text" id="full_name" required placeholder="Contoh: Budi Santoso">
         </div>
 
         <div class="form-group">
-          <label>Foto Profil (Tersimpan di Drive)</label>
+          <label for="photo_file">Foto Profil (Opsional)</label>
           <input type="file" id="photo_file" accept="image/*">
         </div>
 
         <div class="form-group">
-          <label>Jenis Kelamin</label>
+          <label for="gender">Jenis Kelamin</label>
           <select id="gender" required>
             <option value="Laki-laki">Laki-laki</option>
             <option value="Perempuan">Perempuan</option>
@@ -88,26 +90,26 @@
         </div>
 
         <div class="form-group">
-          <label>Orang Tua / Ayah / Ibu</label>
+          <label for="parent_name">Orang Tua (Ayah/Ibu)</label>
           <select id="parent_name" class="member-dropdown">
             <option value="-">-- Pilih Orang Tua (Jika ada) --</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Nama Pasangan (Suami/Istri)</label>
+          <label for="spouse_name">Nama Pasangan (Suami/Istri)</label>
           <select id="spouse_name" class="member-dropdown">
             <option value="-">-- Pilih Pasangan (Jika ada) --</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Anak Ke-</label>
-          <input type="number" id="child_order" min="1" required placeholder="Contoh: 1">
+          <label for="child_order">Anak Ke-</label>
+          <input type="number" id="child_order" min="1" placeholder="Contoh: 1">
         </div>
 
         <div class="form-group">
-          <label>Status</label>
+          <label for="status">Status</label>
           <select id="status" required>
             <option value="Masih Hidup">Masih Hidup</option>
             <option value="Almarhum / Almarhumah">Almarhum / Almarhumah</option>

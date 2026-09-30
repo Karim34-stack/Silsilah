@@ -365,10 +365,79 @@ async function deleteMember(id) {
 }
 
 // Details Modal
+// Detail Kerabat dengan Daftar Anak dan Seluruh Keturunan
 function showDetail(id) {
   const member = membersData.find(m => m.id === id);
   if (!member) return;
 
+  const memberNameNorm = normalizeName(member.full_name);
+
+  // 1. Cari Daftar Anak Langsung
+  const childrenList = membersData.filter(m => {
+    const parentNorm = normalizeName(m.parent_name);
+    if (parentNorm === memberNameNorm) return true;
+
+    if (member.spouse_name && member.spouse_name !== '-') {
+      const spouseNorm = normalizeName(member.spouse_name);
+      if (parentNorm === spouseNorm) return true;
+    }
+    return false;
+  });
+
+  childrenList.sort((a, b) => (parseInt(a.child_order) || 0) - (parseInt(b.child_order) || 0));
+
+  let childrenText = "-";
+  if (childrenList.length > 0) {
+    childrenText = "\n" + childrenList.map((child, index) => {
+      const orderInfo = child.child_order ? `(Anak Ke-${child.child_order})` : `(${index + 1})`;
+      return `   ${index + 1}. ${child.full_name} ${orderInfo}`;
+    }).join("\n");
+  }
+
+  // 2. Fungsi Rekursif untuk Menghimpun Seluruh Keturunan (Anak, Cucu, Cicit, dst.)
+  function getSubDescendantsText(parentNames, level = 1) {
+    const nextGeneration = membersData.filter(m => {
+      const pNorm = normalizeName(m.parent_name);
+      return parentNames.some(p => normalizeName(p) === pNorm);
+    });
+
+    if (nextGeneration.length === 0) return [];
+
+    nextGeneration.sort((a, b) => (parseInt(a.child_order) || 0) - (parseInt(b.child_order) || 0));
+
+    const indent = "   ".repeat(level);
+    const label = level === 1 ? "Anak" : level === 2 ? "Cucu" : level === 3 ? "Cicit" : `Generasi ${level}`;
+
+    let result = [];
+    const childNames = [];
+
+    nextGeneration.forEach((item, idx) => {
+      result.push(`${indent}• [${label}] ${item.full_name} (${item.status})`);
+      childNames.push(item.full_name);
+      if (item.spouse_name && item.spouse_name !== '-') {
+        childNames.push(item.spouse_name);
+      }
+    });
+
+    // Panggil rekursif untuk generasi berikutnya
+    const deeper = getSubDescendantsText(childNames, level + 1);
+    return result.concat(deeper);
+  }
+
+  // Himpun nama target dan pasangannya untuk pencarian keturunan
+  const initialParents = [member.full_name];
+  if (member.spouse_name && member.spouse_name !== '-') {
+    initialParents.push(member.spouse_name);
+  }
+
+  const allDescendantsList = getSubDescendantsText(initialParents, 1);
+
+  let descendantsText = "-";
+  if (allDescendantsList.length > 0) {
+    descendantsText = "\n" + allDescendantsList.join("\n");
+  }
+
+  // 3. Tampilkan Alert
   alert(
     `📌 DETAIL KERABAT:\n\n` +
     `Nama Lengkap: ${member.full_name}\n` +
@@ -376,7 +445,9 @@ function showDetail(id) {
     `Orang Tua: ${member.parent_name || '-'}\n` +
     `Pasangan: ${member.spouse_name || '-'}\n` +
     `Anak Ke-: ${member.child_order || '-'}\n` +
-    `Status: ${member.status}`
+    `Status: ${member.status}\n\n` +
+    `👨‍👩‍👧 DAFTAR ANAK (Langsung): ${childrenText}\n\n` +
+    `🌳 SELURUH KETURUNAN: ${descendantsText}`
   );
 }
 

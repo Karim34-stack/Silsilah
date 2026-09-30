@@ -365,20 +365,21 @@ async function deleteMember(id) {
 }
 
 // Details Modal
-// Detail Kerabat dengan Daftar Anak dan Seluruh Keturunan
+// Detail Kerabat dengan Daftar Anak & Seluruh Keturunan (Aman untuk Silsilah Tree)
 function showDetail(id) {
   const member = membersData.find(m => m.id === id);
   if (!member) return;
 
-  const memberNameNorm = normalizeName(member.full_name);
+  const helperNormalize = str => String(str || '').trim().toLowerCase();
+  const targetNameNorm = helperNormalize(member.full_name);
 
   // 1. Cari Daftar Anak Langsung
   const childrenList = membersData.filter(m => {
-    const parentNorm = normalizeName(m.parent_name);
-    if (parentNorm === memberNameNorm) return true;
+    const parentNorm = helperNormalize(m.parent_name);
+    if (parentNorm === targetNameNorm) return true;
 
     if (member.spouse_name && member.spouse_name !== '-') {
-      const spouseNorm = normalizeName(member.spouse_name);
+      const spouseNorm = helperNormalize(member.spouse_name);
       if (parentNorm === spouseNorm) return true;
     }
     return false;
@@ -394,11 +395,15 @@ function showDetail(id) {
     }).join("\n");
   }
 
-  // 2. Fungsi Rekursif untuk Menghimpun Seluruh Keturunan (Anak, Cucu, Cicit, dst.)
+  // 2. Cari Seluruh Keturunan secara Bertingkat (Anak, Cucu, Cicit, dst.)
+  const visitedNames = new Set();
+  
   function getSubDescendantsText(parentNames, level = 1) {
+    if (!parentNames || parentNames.length === 0 || level > 10) return [];
+
     const nextGeneration = membersData.filter(m => {
-      const pNorm = normalizeName(m.parent_name);
-      return parentNames.some(p => normalizeName(p) === pNorm);
+      const pNorm = helperNormalize(m.parent_name);
+      return parentNames.some(p => helperNormalize(p) === pNorm) && !visitedNames.has(helperNormalize(m.full_name));
     });
 
     if (nextGeneration.length === 0) return [];
@@ -409,25 +414,33 @@ function showDetail(id) {
     const label = level === 1 ? "Anak" : level === 2 ? "Cucu" : level === 3 ? "Cicit" : `Generasi ${level}`;
 
     let result = [];
-    const childNames = [];
+    const nextParentNames = [];
 
-    nextGeneration.forEach((item, idx) => {
-      result.push(`${indent}• [${label}] ${item.full_name} (${item.status})`);
-      childNames.push(item.full_name);
+    nextGeneration.forEach(item => {
+      const normName = helperNormalize(item.full_name);
+      visitedNames.add(normName);
+
+      result.push(`${indent}• [${label}] ${item.full_name} (${item.status || 'Masih Hidup'})`);
+      nextParentNames.push(item.full_name);
+      
       if (item.spouse_name && item.spouse_name !== '-') {
-        childNames.push(item.spouse_name);
+        nextParentNames.push(item.spouse_name);
       }
     });
 
-    // Panggil rekursif untuk generasi berikutnya
-    const deeper = getSubDescendantsText(childNames, level + 1);
+    const deeper = getSubDescendantsText(nextParentNames, level + 1);
     return result.concat(deeper);
   }
 
-  // Himpun nama target dan pasangannya untuk pencarian keturunan
   const initialParents = [member.full_name];
   if (member.spouse_name && member.spouse_name !== '-') {
     initialParents.push(member.spouse_name);
+  }
+
+  // Tandai anggota utama & pasangan agar tidak diproses ulang sebagai keturunan
+  visitedNames.add(targetNameNorm);
+  if (member.spouse_name && member.spouse_name !== '-') {
+    visitedNames.add(helperNormalize(member.spouse_name));
   }
 
   const allDescendantsList = getSubDescendantsText(initialParents, 1);
@@ -446,7 +459,7 @@ function showDetail(id) {
     `Pasangan: ${member.spouse_name || '-'}\n` +
     `Anak Ke-: ${member.child_order || '-'}\n` +
     `Status: ${member.status}\n\n` +
-    `👨‍👩‍👧 DAFTAR ANAK (Langsung): ${childrenText}\n\n` +
+    `👨‍‍👩‍👧 DAFTAR ANAK (Langsung): ${childrenText}\n\n` +
     `🌳 SELURUH KETURUNAN: ${descendantsText}`
   );
 }
